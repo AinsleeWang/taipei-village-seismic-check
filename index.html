@@ -86,12 +86,19 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--yellow);outline
 .chipb i{width:12px;height:12px;border:2px solid var(--ink);display:inline-block}
 .chipb[aria-pressed="true"]{background:var(--ink);color:var(--yellow)}
 .chipb:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
-.mapwrap{display:grid;grid-template-columns:300px minmax(0,1fr);gap:18px;align-items:stretch;min-width:0}
-.mapwrap>.layers{overflow:auto;position:relative}
-@media (min-width:1001px){.mapwrap>.layers{contain:size}}
-.mapwrap>.layers>summary{position:sticky;top:0;z-index:2;background:var(--card)}
-@media (min-width:1001px){.mapwrap>.layers>summary{pointer-events:none}}
-@media (max-width:1000px){.mapwrap{grid-template-columns:minmax(0,1fr)}.mapwrap>.layers{order:2}}
+.mapwrap{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:stretch;min-width:0}
+.setcol{display:flex;gap:10px;min-width:0;align-items:stretch}
+.setcol>.layers{width:300px;flex:none}
+.mapwrap.shut .setcol>.layers{display:none}
+.settab{order:2;flex:none;width:40px;display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px 0;background:var(--ink);color:var(--yellow);border:var(--bd);box-shadow:3px 3px 0 var(--ink);font:inherit;font-weight:900;cursor:pointer;align-self:flex-start;min-height:150px}
+.settab .tx{line-height:1.35;font-size:1rem;text-align:center}
+.settab:hover{background:var(--orange);color:var(--ink)}
+.mapwrap:not(.shut) .settab .arr{transform:rotate(180deg)}
+.setcol>.layers{overflow:auto;position:relative}
+@media (min-width:1001px){.setcol>.layers{contain:size}}
+.setcol>.layers>summary{position:sticky;top:0;z-index:2;background:var(--card)}
+@media (min-width:1001px){.setcol>.layers>summary{pointer-events:none}}
+@media (max-width:1000px){.mapwrap{grid-template-columns:minmax(0,1fr)}.setcol{order:2}.setcol>.layers{width:auto;flex:1;min-width:0}.mapwrap.shut .setcol>.layers{display:block}.settab{display:none}}
 details.layers>summary{cursor:pointer;list-style:none;border-bottom:0}
 details.layers>summary::-webkit-details-marker{display:none}
 details.layers[open]>summary{border-bottom:var(--bd)}
@@ -99,12 +106,12 @@ details.layers[open]>summary{border-bottom:var(--bd)}
 .stat{padding:8px 12px;min-width:0}
 .stat+.stat{border-left:var(--bd)}
 .stat .k{font-weight:900;font-size:.85rem}
-.stat .v{font-family:var(--latin);font-size:1.5rem;line-height:1.15;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.stat .v{font-family:var(--latin);font-size:clamp(1rem,1.5vw,1.5rem);line-height:1.15;display:flex;align-items:baseline;gap:6px;flex-wrap:nowrap;white-space:nowrap;font-variant-numeric:tabular-nums}
 .stat .v span{color:#b5ab9c;transition:color .5s}
 .stat .v span.on{color:var(--ink);background:var(--yellow);padding:0 4px}
 .stat .v i{font-style:normal;font-size:1rem;color:var(--orange)}
 .stat .y{display:flex;gap:24px;font-size:.75rem;font-weight:700;color:var(--muted)}
-@media (max-width:640px){.stat .v{font-size:1.1rem}.stat{padding:6px 8px}}
+@media (max-width:640px){.stat .v{font-size:1.05rem;flex-wrap:wrap}.stat{padding:6px 8px}}
 .mapctl{top:150px}
 .twline{margin:0;font-weight:700}
 .twline b{background:var(--yellow);color:var(--ink);padding:0 6px;border:2px solid var(--ink)}
@@ -234,7 +241,9 @@ footer a,.src a{color:inherit;text-decoration:underline;text-underline-offset:2p
 
   <div class="main">
     <div class="left">
-    <div class="mapwrap">
+    <div class="mapwrap shut" id="mapwrap">
+    <div class="setcol">
+    <button class="settab" id="settab" type="button" aria-expanded="false" aria-controls="layers"><span class="arr">▶</span><span class="tx">進<br>階<br>設<br>定</span></button>
     <details class="card layers" id="layers" open>
         <summary class="cap">進階設定 <small>權重、圖層、透明度、配色</small></summary>
         <div class="wts">
@@ -244,6 +253,7 @@ footer a,.src a{color:inherit;text-decoration:underline;text-underline-offset:2p
         </div>
         <div id="laylist"></div>
       </details>
+    </div>
     <section class="card mapcard">
       <div class="cap"><span>危老分數地圖</span><small id="wlabel">液化 40／高齡 30／老屋 30</small></div>
       <div class="stats" id="stats" aria-live="polite"></div>

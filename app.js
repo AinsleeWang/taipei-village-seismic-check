@@ -410,6 +410,8 @@ $('f').addEventListener('submit',e=>{e.preventDefault();items=suggest(q.value);i
 panel();chips();legend();
 // 手機上進階設定預設收起來（桌機是地圖左邊的直式欄）
 if(matchMedia('(max-width:1000px)').matches)$('layers').open=false;
+// 桌機：進階設定預設收起，左邊箭頭展開／收合，地圖跟著變寬
+$('settab').onclick=()=>{const w=$('mapwrap'),open=w.classList.toggle('shut')===false;$('settab').setAttribute('aria-expanded',open);setTimeout(()=>window.dispatchEvent(new Event('resize')),30)};
 // 單棟頁「回里級地圖」會帶 ?q=地址，門牌載入後自動查詢
 if(qs.get('q')){q.value=qs.get('q');$('clear').hidden=false}
 const enginePromise=(CFG.googleMapsApiKey?startGoogle().catch(err=>{console.warn(err);return startFree()}):startFree()).catch(err=>{console.error(err);$('engine').textContent='地圖載入失敗'});
