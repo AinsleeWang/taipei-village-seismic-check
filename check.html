@@ -330,7 +330,7 @@ footer p{margin:0}
   <article id="report" aria-hidden="true"></article>
 
   <footer>
-    <p>這是自我初篩，只能當提醒，不能取代土木、結構技師或建築師的耐震評估。結果不會上傳；照片只有在你按下「請 Claude 判讀」時才會送出。</p>
+    <p>這是自我初篩，只能當提醒，不能取代土木、結構技師或建築師的耐震評估。結果和照片都不會上傳，照片只在你的手機上自動分析<span id="aiPriv" hidden>；只有在你按下「請 Claude 判讀」時才會送出</span>。</p>
     <p>裂縫自動辨識的做法：在照片裡找比周圍暗的細長線條，再算出每條線的方向。磁磚縫、木紋、電線、陰影也可能被當成裂縫，請以你自己看到的為準。</p>
   </footer>
 </div>
@@ -431,7 +431,7 @@ function sensorHelp(reason){
     h = '<p class="warn">電腦沒有傾斜感測器，請用手機打開這一頁。</p>';
   } else if (inFrame){
     const canOpen = /^https?:$/.test(location.protocol);
-    h = `<p class="warn">這一頁現在是「嵌在別的頁面裡」打開的（例如 Claude 的預覽視窗），手機系統不讓嵌入的頁面讀感測器，所以不是你按錯。</p>
+    h = `<p class="warn">這一頁現在是「嵌在別的頁面裡」打開的（例如在 App 或其他網站的預覽視窗裡），手機系統不讓嵌入的頁面讀感測器，所以不是你按錯。</p>
       <ol><li>按下面的按鈕，用瀏覽器直接開這一頁${isIOS ? '（請用 Safari）' : ''}。</li><li>再按一次「開始量」${isIOS ? '，跳出詢問時選「允許」' : ''}。</li></ol>
       <div class="row">${canOpen ? '<a class="btn y" id="openTop" href="' + location.href.replace(/"/g, '&quot;') + '" target="_blank" rel="noopener">在瀏覽器開啟這一頁 ↗</a>' : ''}<button class="btn w" data-retry>再試一次</button></div>`;
   } else if (isIOS){
@@ -675,7 +675,7 @@ if (window.claude && claude.use){
   claude.use('sample').then(async s => {
     if (!s) return;
     try { const lim = await s.limits(); if (!lim || !lim.images) return; } catch { return; }
-    sampleFn = s;
+    sampleFn = s; $('#aiPriv').hidden = false;
     if (photo) $('#aiBox').hidden = false;
   }).catch(() => {});
 }
