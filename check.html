@@ -34,11 +34,11 @@ header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-betw
 .hero h1{font-weight:900;font-size:clamp(1.6rem,5vw,2.4rem);line-height:1.15;margin:0 0 6px}
 .hero p{margin:0;font-weight:700}
 .steps{display:grid;grid-template-columns:repeat(4,1fr);border-top:3px solid #141414}
-.steps button{font:inherit;font-weight:900;font-size:.85rem;border:0;background:transparent;color:#141414;padding:10px 4px;cursor:pointer;display:grid;gap:0;justify-items:center;line-height:1.2}
+.steps button{position:relative;font:inherit;font-weight:900;font-size:.85rem;border:0;background:transparent;color:#141414;padding:10px 4px;cursor:pointer;display:grid;gap:0;justify-items:center;line-height:1.2}
 .steps button+button{border-left:3px solid #141414}
 .steps button b{font-family:var(--latin);font-size:1.15rem}
 .steps button[aria-current="step"]{background:#141414;color:var(--yellow)}
-.steps button.done b::after{content:" ✓"}
+.steps button.ok::after{content:"✓";position:absolute;top:4px;right:6px;width:20px;height:20px;line-height:17px;text-align:center;font-size:.8rem;background:var(--yellow);color:#141414;border:2px solid #141414;border-radius:50%}
 .card{background:var(--card);border:var(--bd);box-shadow:var(--shadow)}
 .cap{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;padding:8px 14px;border-bottom:var(--bd);font-weight:900;background:var(--ink);color:var(--paper)}
 .cap small{font-family:var(--mono);font-weight:500;font-size:.72rem;opacity:.8}
@@ -264,7 +264,7 @@ footer p{margin:0}
         </div>
         <input id="cam" type="file" accept="image/*" capture="environment" hidden>
         <input id="pick" type="file" accept="image/*" hidden>
-        <span class="sub">沒有裂縫也可以直接跳到下一步。</span>
+        <div class="opts" data-k="nocrack"><button data-v="yes">這棟沒看到裂縫</button></div>
       </div>
       <div id="crackOut" hidden>
         <div class="photobar">
@@ -354,7 +354,7 @@ const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const KEY = 'weilao-check-draft-v1';
 let saveT = null, restoringNow = false;
-const st = { year:null, struct:null, soft:null, liq:null, roof:null, balc:null, wall:null, obs:null, where:null, dir:null, width:null, spall:null, rebar:null, tilts:[], auto:null, ai:null };
+const st = { year:null, struct:null, soft:null, liq:null, roof:null, balc:null, wall:null, obs:null, where:null, dir:null, width:null, spall:null, rebar:null, nocrack:null, tilts:[], auto:null, ai:null };
 
 /* ---------- 步驟切換 ---------- */
 let cur = 0;
@@ -802,7 +802,7 @@ function renderResult(){
   why.sort((a, b) => b[0] - a[0]);
   const missing = [];
   if (!st.tilts.length && !st.obs) missing.push('傾斜');
-  if (!hasCrack && st.spall == null && st.rebar == null) missing.push('裂縫');
+  if (!hasCrack && st.spall == null && st.rebar == null && st.nocrack !== 'yes') missing.push('裂縫');
   if (st.year == null) missing.push('屋齡');
   // 選「不知道／不確定」不能當成沒問題
   const NA = { struct:'結構', soft:'一樓是不是很空', liq:'土壤液化潛勢', roof:'頂樓加蓋', balc:'陽台外推', wall:'打掉過牆', where:'裂縫位置' };
@@ -814,7 +814,7 @@ function renderResult(){
     el.innerHTML = `<div class="head"><div class="lv">？</div><div class="lt">資料不足，還不能判斷</div><div>傾斜、裂縫、屋齡都還沒填。至少填一項，才能給你初篩結果。</div></div>
       <div class="body"><div class="row"><button class="btn" data-go2="0">填房子資料</button><button class="btn w" data-go2="1">量傾斜</button><button class="btn w" data-go2="2">拍裂縫</button></div></div>`;
     el.querySelectorAll('[data-go2]').forEach(b => b.onclick = () => go(+b.dataset.go2));
-    $$('#steps button').forEach(b => b.classList.remove('done'));
+    stepMarks();
     lastResult = { lv:-1, el };
     return;
   }
@@ -835,7 +835,7 @@ function renderResult(){
       </ul></div>
       <p class="note" style="color:#5a544c;border-color:#5a544c">這是自我初篩，只能當提醒，不能取代專業的耐震評估。傾斜門檻 1/200 與 1/40 是震後緊急評估用來看「整棟建物」傾斜的門檻，地板局部不平不等於整棟傾斜。耐震規範年份以民國 63 年第一版、民國 88 年 921 地震後修訂為分界，考慮建照到完工的時間，放寬到 90 年。</p>
     </div>`;
-  $$('#steps button').forEach((b, i) => b.classList.toggle('done', i < 3 && (i === 0 ? st.year != null || st.struct : i === 1 ? st.tilts.length || st.obs : hasCrack || st.spall || st.rebar)));
+  stepMarks();
   lastResult = { lv, el };
 }
 
@@ -908,7 +908,18 @@ $('#restart').onclick = async () => { if (!confirm('要清掉這支手機上存�
    （只有本人看得到）。嵌入的預覽頁面，手機瀏覽器常常不讓它長期保存瀏覽器儲存，所以要第二層。 */
 let cloud = null, cloudT = null, loadedAt = 0;
 function draft(withPhoto){ return { v:1, at:Date.now(), step:cur, st, photo: withPhoto ? photoData : null }; }
+// 每一步填了東西就立刻打勾（不用等到看結果）
+function stepMarks(){
+  const done = [
+    st.year != null || !!st.struct || !!st.soft || !!st.liq,
+    st.tilts.length > 0 || !!st.obs,
+    !!(st.dir || st.width || st.where || st.spall || st.rebar || photoData) || st.nocrack === 'yes',
+    false
+  ];
+  $$('#steps button').forEach((b, i) => b.classList.toggle('ok', done[i]));
+}
 function save(){
+  stepMarks();
   if (restoringNow) return;
   clearTimeout(saveT);
   saveT = setTimeout(() => {
@@ -955,7 +966,7 @@ function applyDraft(d, source){
   const s = d.st;
   if (s.year){ st.year = s.year; $('#year').value = s.year; }
   if (typeof s.addr === 'string'){ st.addr = s.addr.slice(0, 120); $('#addr').value = st.addr; mapLinks(); }
-  ['struct','soft','liq','roof','balc','wall','obs','where','dir','width','spall','rebar'].forEach(k => { if (s[k]) setOpt(k, s[k]); });
+  ['struct','soft','liq','roof','balc','wall','obs','where','dir','width','spall','rebar','nocrack'].forEach(k => { if (s[k]) setOpt(k, s[k]); });
   st.tilts = Array.isArray(s.tilts) ? s.tilts.filter(t => t && typeof t.deg === 'number').map(t => ({ mode:String(t.mode), deg:t.deg, label:String(t.label), cal:t.cal === true })) : [];
   renderMeas();
   st.auto = s.auto || null; st.ai = s.ai || null; st.photoAt = typeof s.photoAt === 'number' ? s.photoAt : null;
