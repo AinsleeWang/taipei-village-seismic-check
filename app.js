@@ -38,7 +38,7 @@ const SRC={
   house:[['不動產實價登錄（內政部，2011–2026 成交）','https://plvr.land.moi.gov.tw/DownloadOpenData'],['座標整理版 taiwan-lvr-geodata（第三方）','https://github.com/monkey1wizard/taiwan-lvr-geodata'],['核對用：臺北市歷年使用執照摘要（建管處）',DT('c876ff02-af2e-4eb8-bd33-d444f5052733')]],
   fire:[['臺北市消防通道清冊（消防局）',DT('7a800e92-eb22-461f-b29d-8def2127a1bc')],['定位用：內政部門牌位置資料（taiwan-address-data 整理版）','https://github.com/monkey1wizard/taiwan-address-data']]
 };
-SRC.score=[...SRC.liq,...SRC.old,SRC.house[0]];
+SRC.score=[...SRC.liq,...SRC.old,SRC.house[0],['村（里）界（內政部國土測繪中心，taiwan-atlas 簡化版）','https://www.npmjs.com/package/taiwan-atlas']];
 const srcHtml=k=>SRC[k].map(([t,u])=>`<a href="${u}" target="_blank" rel="noopener">${t}</a>`).join('、');
 const PRESETS = [
   {id:'bal',label:'均衡',w:{liq:40,old:30,house:30}},
