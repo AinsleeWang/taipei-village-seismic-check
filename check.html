@@ -383,7 +383,7 @@ function setOpt(k, v){
 }
 $$('.opts').forEach(g => g.querySelectorAll('button').forEach(b => {
   b.setAttribute('aria-pressed','false');
-  b.onclick = () => setOpt(g.dataset.k, st[g.dataset.k] === b.dataset.v ? null : b.dataset.v);
+  b.onclick = () => { if (g.dataset.k === 'liq') st.liqMap = false; setOpt(g.dataset.k, st[g.dataset.k] === b.dataset.v ? null : b.dataset.v); };
 }));
 // 輸入 1912 以上當成西元，換算成民國
 const toROC = v => v > 1911 ? v - 1911 : v;
@@ -913,7 +913,7 @@ function draft(withPhoto){ return { v:1, at:Date.now(), step:cur, st, photo: wit
 // 每一步填了東西就立刻打勾（不用等到看結果）
 function stepMarks(){
   const done = [
-    st.year != null || !!st.struct || !!st.soft || !!st.liq,
+    st.year != null || !!st.struct || !!st.soft || (!!st.liq && !st.liqMap),
     st.tilts.length > 0 || !!st.obs,
     !!(st.dir || st.width || st.where || st.spall || st.rebar || photoData) || st.nocrack === 'yes',
     false
@@ -972,7 +972,7 @@ function applyDraft(d, source){
   ['struct','soft','liq','roof','balc','wall','obs','where','dir','width','spall','rebar','nocrack'].forEach(k => { if (typeof s[k] === 'string' && validOpt(k, s[k])) setOpt(k, s[k]); });
   st.tilts = Array.isArray(s.tilts) ? s.tilts.filter(t => t && Number.isFinite(t.deg)).map(t => ({ mode:String(t.mode), deg:t.deg, label:String(t.label), cal:t.cal === true })) : [];
   renderMeas();
-  st.auto = typeof s.auto === 'string' && validOpt('dir', s.auto) ? s.auto : null; st.ai = s.ai || null; st.photoAt = typeof s.photoAt === 'number' ? s.photoAt : null;
+  st.liqMap = s.liqMap === true; st.auto = typeof s.auto === 'string' && validOpt('dir', s.auto) ? s.auto : null; st.ai = s.ai || null; st.photoAt = typeof s.photoAt === 'number' ? s.photoAt : null;
   if (d.photo && /^data:image\/jpeg;base64,/.test(d.photo)){ photoData = d.photo; loadPhoto(d.photo, true); }
   if (st.ai && typeof st.ai === 'object') showAi(st.ai);
   restoringNow = false;
@@ -989,7 +989,8 @@ restore();
 // 地圖頁會帶 ?liq=high|mid|low&addr=… 過來
 (() => {
   const q = new URLSearchParams(location.search);
-  const liq = q.get('liq'); if (['high','mid','low'].includes(liq)) setOpt('liq', liq);
+  const liq = q.get('liq'); // 從地圖帶進來的液化潛勢只是預填，不算使用者自己填過，所以 01 不打勾；使用者自己選過就不蓋掉
+  if (['high','mid','low'].includes(liq) && (!st.liq || st.liqMap)){ st.liqMap = true; setOpt('liq', liq); }
   const ad = q.get('addr'); if (ad){ st.addr = ad.slice(0, 120); $('#addr').value = st.addr; save(); }
   mapLinks();
 })();
