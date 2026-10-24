@@ -374,6 +374,7 @@ $$('#steps button').forEach(b => b.onclick = () => go(+b.dataset.s));
 $$('[data-go]').forEach(b => b.onclick = () => go(+b.dataset.go));
 
 /* ---------- 選項按鈕 ---------- */
+function validOpt(k, v){ return [...$$(`.opts[data-k="${k}"] button`)].some(b => b.dataset.v === v); }
 function setOpt(k, v){
   st[k] = v;
   $$(`.opts[data-k="${k}"] button`).forEach(b => b.setAttribute('aria-pressed', b.dataset.v === v));
@@ -876,7 +877,7 @@ function buildReport(){
     <div class="rlv rl${lv}"><b>${'ABCD'[lv]} 級</b><div><div style="font-weight:900;font-size:13pt">${LV[lv].t}</div><div>${LV[lv].s}</div></div></div>
     <section><h2>判斷依據</h2>${why ? why.innerHTML.replace(/<h3>.*?<\/h3>/, '') : ''}</section>
     <section><h2>房子基本資料</h2><table>
-      <tr><th>完工年份</th><td>${st.year ? '民國 ' + st.year + ' 年（西元 ' + (st.year + 1911) + ' 年）' : '未填'}</td></tr>
+      <tr><th>完工年份</th><td>${st.year ? '民國 ' + escapeHtml(st.year) + ' 年（西元 ' + (Number(st.year) + 1911) + ' 年）' : '未填'}</td></tr>
       <tr><th>結構</th><td>${L('struct')}</td></tr><tr><th>一樓牆少（軟腳）</th><td>${L('soft')}</td></tr>
       <tr><th>土壤液化潛勢</th><td>${L('liq')}</td></tr><tr><th>頂樓加蓋</th><td>${L('roof')}</td></tr><tr><th>陽台外推</th><td>${L('balc')}</td></tr><tr><th>打掉過牆</th><td>${L('wall')}</td></tr></table></section>
     <section><h2>傾斜量測</h2><table><tr><th style="width:auto">量測</th><th style="width:auto">角度</th><th style="width:auto">斜率</th><th style="width:auto">判斷</th></tr>${tiltRows}</table>
@@ -965,12 +966,13 @@ function applyDraft(d, source){
   loadedAt = d.at || 0;
   restoringNow = true;
   const s = d.st;
-  if (s.year){ st.year = s.year; $('#year').value = s.year; }
+  // 連結或儲存的草稿都可能被改過，只收合法的值（年份是整數、選項必須是畫面上有的按鈕）
+  const y = Number(s.year); if (Number.isInteger(y) && y >= 1 && y <= 116){ st.year = y; $('#year').value = y; }
   if (typeof s.addr === 'string'){ st.addr = s.addr.slice(0, 120); $('#addr').value = st.addr; mapLinks(); }
-  ['struct','soft','liq','roof','balc','wall','obs','where','dir','width','spall','rebar','nocrack'].forEach(k => { if (s[k]) setOpt(k, s[k]); });
-  st.tilts = Array.isArray(s.tilts) ? s.tilts.filter(t => t && typeof t.deg === 'number').map(t => ({ mode:String(t.mode), deg:t.deg, label:String(t.label), cal:t.cal === true })) : [];
+  ['struct','soft','liq','roof','balc','wall','obs','where','dir','width','spall','rebar','nocrack'].forEach(k => { if (typeof s[k] === 'string' && validOpt(k, s[k])) setOpt(k, s[k]); });
+  st.tilts = Array.isArray(s.tilts) ? s.tilts.filter(t => t && Number.isFinite(t.deg)).map(t => ({ mode:String(t.mode), deg:t.deg, label:String(t.label), cal:t.cal === true })) : [];
   renderMeas();
-  st.auto = s.auto || null; st.ai = s.ai || null; st.photoAt = typeof s.photoAt === 'number' ? s.photoAt : null;
+  st.auto = typeof s.auto === 'string' && validOpt('dir', s.auto) ? s.auto : null; st.ai = s.ai || null; st.photoAt = typeof s.photoAt === 'number' ? s.photoAt : null;
   if (d.photo && /^data:image\/jpeg;base64,/.test(d.photo)){ photoData = d.photo; loadPhoto(d.photo, true); }
   if (st.ai && typeof st.ai === 'object') showAi(st.ai);
   restoringNow = false;
