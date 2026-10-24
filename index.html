@@ -95,7 +95,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--yellow);outline
 .settab:hover{background:var(--orange);color:var(--ink)}
 .mapwrap:not(.shut) .settab .arr{transform:rotate(180deg)}
 .setcol>.layers{overflow:auto;position:relative}
-@media (min-width:1001px){.setcol>.layers{contain:size}}
+@media (min-width:1001px){.setcol{align-self:start;position:sticky;top:12px}.setcol>.layers{max-height:calc(100vh - 24px)}}
 .setcol>.layers>summary{position:sticky;top:0;z-index:2;background:var(--card)}
 @media (min-width:1001px){.setcol>.layers>summary::after{content:'◀ 收起';font-size:.8rem;margin-left:auto}}
 @media (max-width:1000px){.mapwrap{grid-template-columns:minmax(0,1fr)}.setcol{order:2}.setcol>.layers{width:auto;flex:1;min-width:0}.mapwrap.shut .setcol>.layers{display:block}.settab{display:none}}
@@ -118,6 +118,7 @@ details.layers[open]>summary{border-bottom:var(--bd)}
 .mapctl{top:150px}
 .twline{margin:0;font-weight:700}
 .twline b{background:var(--yellow);color:var(--ink);padding:0 6px;border:2px solid var(--ink)}
+.mapcol{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-content:start;min-width:0}
 .dbcard{justify-self:start;width:min(100%,660px)}
 #db svg{max-width:none!important;width:100%}
 .dbcard .seg{box-shadow:none;border-width:2px}
@@ -259,6 +260,7 @@ footer a,.src a{color:inherit;text-decoration:underline;text-underline-offset:2p
         <div id="laylist"></div>
       </details>
     </div>
+    <div class="mapcol">
     <section class="card mapcard">
       <div class="cap"><span>危老分數地圖</span><small id="wlabel">液化 40／高齡 30／老屋 30</small></div>
       <div class="stats" id="stats" aria-live="polite"></div>
@@ -275,13 +277,15 @@ footer a,.src a{color:inherit;text-decoration:underline;text-underline-offset:2p
       <div class="legend" id="legend"></div>
     </section>
 
-    </div>
-
     <section class="card dbcard">
       <div class="cap"><span>現在 → 2035 變化</span><div class="seg" role="group" aria-label="啞鈴圖排序"><button id="dbTop" aria-pressed="true">2035 前 20</button><button id="dbRise" aria-pressed="false">上升最多 20</button></div></div>
       <div id="db"></div>
       <p class="dbnote">○ 現在　● 2035 推估　線越長，十年內分數升得越多。★＝現在不在前 30、2035 進入前 30 的里。點一列可在地圖上找到該里。「上升最多」裡分數低的里，多半是現在 20–29 年的房子到 2035 年剛好滿 30 年。</p>
     </section>
+    </div>
+    </div>
+
+
 
 
     </div>
@@ -315,6 +319,6 @@ footer a,.src a{color:inherit;text-decoration:underline;text-underline-offset:2p
 <script src="config.js?v=20261024b"></script>
 <script src="lib/deck.gl-9.1.14.min.js"></script>
 <script src="lib/maplibre-gl-4.7.1.js"></script>
-<script src="app.js?v=20261024d"></script>
+<script src="app.js?v=20261024e"></script>
 </body>
 </html>
