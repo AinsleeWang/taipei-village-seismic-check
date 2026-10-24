@@ -76,6 +76,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--yellow);outline
 .b0{background:#9fe0b6}.b1{background:var(--yellow)}.b2{background:#ffa25e}.b3{background:#ff7d74}
 .help{display:grid;gap:10px}
 .or{font-weight:900;color:var(--muted)}
+.tomap{padding:4px 12px;font-size:.88rem;box-shadow:3px 3px 0 var(--ink)}
 .linkbtn{font:inherit;font-weight:900;font-size:.9rem;background:none;border:0;border-bottom:2px solid var(--ink);color:var(--ink);padding:0;cursor:pointer}
 #levelDlg{max-height:calc(100dvh - 32px);overflow:auto;border:var(--bd);box-shadow:var(--shadow);padding:0;max-width:min(520px,calc(100vw - 32px));width:100%;background:var(--card);color:var(--ink)}
 #levelDlg::backdrop{background:rgba(20,20,20,.55)}
@@ -158,7 +159,7 @@ footer p{margin:0}
 <div class="wrap">
   <header>
     <p class="brand"><a href="index.html">危老檢查你我他</a></p>
-    <span class="chip">單棟初篩 · 自己先看一次</span>
+    <div class="row" style="gap:8px"><span class="chip">單棟初篩 · 自己先看一次</span><a class="btn w tomap" href="index.html">← 回里級地圖</a></div>
   </header>
 
   <section class="hero">
@@ -302,7 +303,7 @@ footer p{margin:0}
     <div class="res l0" id="res"></div>
     <div class="in printbox">
       <div class="q"><label for="addr">地址或大樓名稱（只印在報告上，可不填）</label><input id="addr" type="text" placeholder="例如：○○路○段○號 ○樓"></div>
-      <div class="row"><button class="btn y" id="print">🖨 列印報告／存成 PDF</button></div>
+      <div class="row"><button class="btn y" id="print">🖨 列印報告／存成 PDF</button><a class="btn w tomap" href="index.html">← 回里級地圖看這一里</a></div>
       <p class="sub" id="printHint">報告有你填的房子資料、傾斜紀錄、裂縫照片和結果，可以拿給管委會、技師或申請初評時參考。手機上在列印畫面選「儲存為 PDF」或分享即可。</p>
     </div>
     <p class="sub" style="margin:0 16px 10px">資料只存在你的裝置，7 天後自動清除。共用裝置請按「清除我的資料」。</p>
@@ -867,7 +868,9 @@ function buildReport(){
     <section><h2>建議接下來</h2>${lists.length ? '<ul>' + lists[lists.length - 1].innerHTML + '</ul>' : ''}</section>
     <p class="sm" style="margin-top:14px;border-top:1px solid #000;padding-top:6px">本報告由住戶使用「危老檢查你我他」單棟初篩網頁自行填寫與量測產生，只能當提醒，不能取代土木、結構技師或建築師的耐震能力評估。</p>`;
 }
-$('#addr').oninput = e => { st.addr = e.target.value.trim().slice(0, 120); save(); };
+$('#addr').oninput = e => { st.addr = e.target.value.trim().slice(0, 120); save(); mapLinks(); };
+// 回地圖時帶著地址，地圖頁會自動查詢、定位到同一里
+function mapLinks(){ $$('a.tomap').forEach(a => a.href = 'index.html' + (st.addr ? '?q=' + encodeURIComponent(st.addr) : '')); }
 $('#print').onclick = () => {
   if ($('#manDeg').value.trim()) $('#manAdd').click();
   buildReport();
@@ -928,7 +931,7 @@ function applyDraft(d, source){
   restoringNow = true;
   const s = d.st;
   if (s.year){ st.year = s.year; $('#year').value = s.year; }
-  if (typeof s.addr === 'string'){ st.addr = s.addr.slice(0, 120); $('#addr').value = st.addr; }
+  if (typeof s.addr === 'string'){ st.addr = s.addr.slice(0, 120); $('#addr').value = st.addr; mapLinks(); }
   ['struct','soft','liq','roof','balc','wall','obs','where','dir','width','spall','rebar'].forEach(k => { if (s[k]) setOpt(k, s[k]); });
   st.tilts = Array.isArray(s.tilts) ? s.tilts.filter(t => t && typeof t.deg === 'number').map(t => ({ mode:String(t.mode), deg:t.deg, label:String(t.label), cal:t.cal === true })) : [];
   renderMeas();
@@ -951,6 +954,7 @@ restore();
   const q = new URLSearchParams(location.search);
   const liq = q.get('liq'); if (['high','mid','low'].includes(liq)) setOpt('liq', liq);
   const ad = q.get('addr'); if (ad){ st.addr = ad.slice(0, 120); $('#addr').value = st.addr; save(); }
+  mapLinks();
 })();
 initCloud();
 })();
