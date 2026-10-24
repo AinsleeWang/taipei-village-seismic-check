@@ -89,6 +89,29 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--yellow);outline
 details.layers>summary{cursor:pointer;list-style:none;border-bottom:0}
 details.layers>summary::-webkit-details-marker{display:none}
 details.layers[open]>summary{border-bottom:var(--bd)}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-bottom:var(--bd);background:var(--paper)}
+.stat{padding:8px 12px;min-width:0}
+.stat+.stat{border-left:var(--bd)}
+.stat .k{font-weight:900;font-size:.85rem}
+.stat .v{font-family:var(--latin);font-size:1.5rem;line-height:1.15;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.stat .v span{color:#b5ab9c;transition:color .5s}
+.stat .v span.on{color:var(--ink);background:var(--yellow);padding:0 4px}
+.stat .v i{font-style:normal;font-size:1rem;color:var(--orange)}
+.stat .y{display:flex;gap:24px;font-size:.75rem;font-weight:700;color:var(--muted)}
+@media (max-width:640px){.stat .v{font-size:1.1rem}.stat{padding:6px 8px}}
+.mapctl{top:150px}
+.twline{margin:0;font-weight:700}
+.twline b{background:var(--yellow);color:var(--ink);padding:0 6px;border:2px solid var(--ink)}
+.dbcard .seg{box-shadow:none;border-width:2px}
+.dbcard .seg button{font-size:.8rem;padding:3px 10px}
+.dbcard .seg button+button{border-left:2px solid var(--ink)}
+#db{padding:8px 12px;overflow-x:auto}
+#db svg{display:block;min-width:520px;font-family:var(--font)}
+#db .nm{font-size:14px;font-weight:700;fill:var(--ink)}
+#db .vl,#db .ax{font-family:var(--mono);font-size:12px;fill:var(--muted)}
+#db .row{cursor:pointer}
+#db .row:hover rect:last-of-type{fill:rgba(255,210,63,.35)}
+.dbnote{margin:0;padding:8px 12px;border-top:var(--bd);font-size:.875rem;color:var(--muted)}
 .yearnote{margin:0;padding:8px 12px;border-top:var(--bd);background:#e4e8fb;font-size:.875rem}
 .yrline{margin:0;font-size:.875rem;font-weight:700;color:#e3e8ff}
 .yrline b{background:var(--yellow);color:var(--ink);padding:0 6px;border:2px solid var(--ink)}
@@ -204,16 +227,23 @@ footer a,.src a{color:inherit;text-decoration:underline;text-underline-offset:2p
     <div class="left">
     <section class="card mapcard">
       <div class="cap"><span>危老分數地圖</span><small id="wlabel">液化 40／高齡 30／老屋 30</small></div>
+      <div class="stats" id="stats" aria-live="polite"></div>
       <div class="mapctl">
         <div class="seg" role="group" aria-label="視角"><button id="v3" aria-pressed="true">3D</button><button id="v2" aria-pressed="false">2D</button></div>
         <div class="seg"><button id="home" aria-pressed="false">全市</button></div>
-        <div class="seg" role="group" aria-label="年份"><button id="y0" aria-pressed="true">現在</button><button id="y1" aria-pressed="false">2035</button></div>
+        <div class="seg" role="group" aria-label="年份"><button id="y0" aria-pressed="true">現在</button><button id="y1" aria-pressed="false">2035</button><button id="y2" aria-pressed="false">變化</button></div>
       </div>
       <div id="map"></div>
       <div class="loading" id="loading">資料載入中</div>
       <p class="yearnote" id="yearnote" hidden><b>2035 推估：</b>把各里 115 年 9 月的單齡人口往後推 10 年，套用 10 年存活率，新生兒以 0 歲人數×0.95 估算，不計遷入遷出；全市 65 歲以上會從 24.9% 升到約 33.3%。老屋比例改用現在 20 年以上的比例（到 2035 年就滿 30 年）。液化不變。這是推估，不是預測。</p>
       <div class="chips" id="chips" role="group" aria-label="疊圖開關"></div>
       <div class="legend" id="legend"></div>
+    </section>
+
+    <section class="card dbcard">
+      <div class="cap"><span>現在 → 2035 變化</span><div class="seg" role="group" aria-label="啞鈴圖排序"><button id="dbTop" aria-pressed="true">2035 前 20</button><button id="dbRise" aria-pressed="false">上升最多 20</button></div></div>
+      <div id="db"></div>
+      <p class="dbnote">○ 現在　● 2035 推估　線越長，十年內分數升得越多。★＝現在不在前 30、2035 進入前 30 的里。點一列可在地圖上找到該里。「上升最多」裡分數低的里，多半是現在 20–29 年的房子到 2035 年剛好滿 30 年。</p>
     </section>
 
     <details class="card layers" id="layers">
@@ -228,12 +258,12 @@ footer a,.src a{color:inherit;text-decoration:underline;text-underline-offset:2p
     </div>
 
     <div class="side">
-      <section class="card top"><div class="cap" id="top10h">全市前 10 名</div><ol id="top10"></ol></section>
 
       <section class="card result" aria-live="polite">
         <div class="cap">查詢結果 <small id="coord">—</small></div>
         <div class="res-in" id="res"><p class="empty-res">輸入地址，或在地圖上點一個里。</p></div>
       </section>
+      <section class="card top"><div class="cap" id="top10h">全市前 10 名</div><ol id="top10"></ol></section>
 
     </div>
   </div>

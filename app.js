@@ -20,11 +20,13 @@ const PAL = {
   liq:   {blue:['#3f5ad8','#8a9cec','#d4dbf8'], orange:['#a53d05','#ef8d42','#fbd7b5'], ink:['#141414','#6b6b6b','#c9c9c9']},
   old:   {violet:['#f1e9fb','#c9b0ee','#9a72de','#6d3fc6','#3f1f86'], green:['#e6f5e1','#a9dd9c','#5fbf5a','#2f8f3a','#145a22'], orange:['#fbe7d2','#f6bc85','#ef8d42','#e8650a','#a53d05']},
   house: {ink:['#141414','#b9b2a6'], orange:['#e8650a','#c9c1b4'], blue:['#3f5ad8','#c9c1b4']},
+  twin:  {orange:['#a53d05','#e8650a','#f6bc85','#efe6d6'], red:['#8b1a17','#e5322d','#f4a9a6','#efe6d6'], violet:['#3f1f86','#7a4fd6','#c9b0ee','#efe6d6']},
   fire:  {red:['#e5322d'], blue:['#3f5ad8'], ink:['#141414']}
 };
 const PALNAME={orange:'橘色',blue:'藍色',heat:'黃到黑',ink:'黑色',violet:'紫色',green:'綠色',yellow:'黃色',red:'紅色'};
 const LAYERS = [
   {k:'score', name:'危老分數（3D 柱）', tag:'A 版分數', on:true, op:.92, pal:'orange', desc:'每個里依分數升高，顏色越深分數越高。'},
+  {k:'twin', name:'雙老熱區（人老＋屋老）', tag:'真實／推估', on:false, op:.85, pal:'orange', desc:'65 歲以上比例和 30 年以上老屋比例「都」在全市前 1/4 的里（門檻：高齡 ≥ 27.5%、老屋 ≥ 93%）。切到 2035 用同一個門檻，看熱區擴大多少。'},
   {k:'liq', name:'土壤液化潛勢', tag:'真實', on:false, op:.55, pal:'blue', desc:'高／中／低潛勢範圍。'},
   {k:'house', name:'逐棟屋齡（實價登錄成交樣本）', tag:'成交樣本', on:false, op:.85, pal:'ink', desc:'只有 2011–2026 年有成交紀錄的建物，約占全市 28%，而且偏新，不是全部建物；屋齡用登錄的建築完成年，座標依門牌定位（第三方整理）。'},
   {k:'old', name:'高齡人口比例', tag:'真實', on:false, op:.75, pal:'violet', desc:'65 歲以上人口比例，以里為單位。'},
@@ -38,6 +40,7 @@ const SRC={
   house:[['不動產實價登錄（內政部，2011–2026 成交）','https://plvr.land.moi.gov.tw/DownloadOpenData'],['座標整理版 taiwan-lvr-geodata（第三方）','https://github.com/monkey1wizard/taiwan-lvr-geodata'],['核對用：臺北市歷年使用執照摘要（建管處）',DT('c876ff02-af2e-4eb8-bd33-d444f5052733')]],
   fire:[['臺北市消防通道清冊（消防局）',DT('7a800e92-eb22-461f-b29d-8def2127a1bc')],['定位用：內政部門牌位置資料（taiwan-address-data 整理版）','https://github.com/monkey1wizard/taiwan-address-data']]
 };
+SRC.twin=[...SRC.old,SRC.house[0]];
 SRC.score=[...SRC.liq,...SRC.old,SRC.house[0],['村（里）界（內政部國土測繪中心，taiwan-atlas 簡化版）','https://www.npmjs.com/package/taiwan-atlas']];
 const srcHtml=k=>SRC[k].map(([t,u])=>`<a href="${u}" target="_blank" rel="noopener">${t}</a>`).join('、');
 const PRESETS = [
@@ -46,10 +49,16 @@ const PRESETS = [
   {id:'eld',label:'照顧高齡',w:{liq:30,old:50,house:20}}
 ];
 const st = store.get('layers3', {});
-const AREA=['score','liq','old'];
-let yr=0; // 0 現在、1 2035 推估
-function applyYear(){for(const v of V){v.s=yr?v.s1:v.s0;v.r=yr?v.r1:v.r0;v.pt=yr?v.pt1:v.pt0;v.pa=yr?v.p1:v.p0;v.ha=yr?v.h1:v.h0;v.isNew=v.r1<=30&&v.r0>30}}
-const YL=()=>yr?'2035 推估':'現在'; // 面狀圖層一次只開一層，才不會疊成一片灰
+const AREA=['score','twin','old','liq'];
+let yr=0; // 0 現在、1 2035 推估、2 變化（2035 減現在）
+let TP=.2753,TH=.9306,DB='top'; // 雙老門檻（現在的全市前 1/4）、啞鈴圖排序
+function applyYear(){for(const v of V){v.s=yr?v.s1:v.s0;v.r=yr?v.r1:v.r0;v.pt=yr?v.pt1:v.pt0;v.pa=yr?v.p1:v.p0;v.ha=yr?v.h1:v.h0;v.isNew=v.r1<=30&&v.r0>30;v.ds=v.s1-v.s0;v.tw=twinCls(v)}}
+// 雙老分類：0 現在就是熱區、1 到 2035 才變熱區、2 只有一老、3 都不是
+const both=(p,h)=>(p>=TP)+(h>=TH);
+function twinCls(v){const a=both(v.p0,v.h0),b=both(v.p1,v.h1);if(!yr)return a===2?0:a===1?2:3;return a===2?0:b===2?1:b===1?2:3}
+const TWN=['現在就是雙老熱區','到 2035 變成雙老熱区'.replace('区','區'),'只有一老（人老或屋老）','都不高'];
+const YL=()=>yr?'2035 推估':'現在';
+const q75=a=>[...a].sort((x,y)=>x-y)[Math.floor(a.length*.75)]; // 面狀圖層一次只開一層，才不會疊成一片灰
 const L = Object.fromEntries(LAYERS.map(l=>[l.k,{...l,...(st[l.k]||{})}]));
 let preset = store.get('preset','bal');
 let houseOldOnly = store.get('houseOldOnly', true);
@@ -69,19 +78,27 @@ const inPoly=(x,y,rings)=>{let c=false;for(const r of rings)if(inRing(x,y,r))c=!
 const findV=(x,y)=>V.find(v=>x>=v.b[0]&&x<=v.b[2]&&y>=v.b[1]&&y<=v.b[3]&&inPoly(x,y,v.rings));
 
 function weights(){return PRESETS.find(p=>p.id===preset).w}
+const wl=()=>{const w=weights();return `液化 ${w.liq}／高齡 ${w.old}／老屋 ${w.house}`};
 function rescore(){const w=weights(),t=w.liq+w.old+w.house;
   const P=x=>[100*w.liq/t*x[0],100*w.old/t*x[1],100*w.house/t*x[2]];
   for(const v of V){v.pt0=P(v.x0);v.pt1=P(v.x1);v.s0=Math.round(v.pt0[0]+v.pt0[1]+v.pt0[2]);v.s1=Math.round(v.pt1[0]+v.pt1[1]+v.pt1[2])}
   [...V].sort((a,b)=>b.s0-a.s0||b.L-a.L||b.p0-a.p0).forEach((v,i)=>v.r0=i+1);
   [...V].sort((a,b)=>b.s1-a.s1||b.L-a.L||b.p1-a.p1).forEach((v,i)=>v.r1=i+1);
-  applyYear();top10();
-  $('wlabel').textContent=`液化 ${w.liq}／高齡 ${w.old}／老屋 ${w.house}`;
+  applyYear();top10();stats();dumbbell();
+  $('wlabel').textContent=yr===2?'顏色與柱高＝十年內分數增加多少':wl();
   $('wdesc').textContent=`權重：液化面積 ${w.liq}、高齡人口 ${w.old}、老屋比例 ${w.house}。換權重後排名會重算。`}
 
 // ---------- layers ----------
 const ramp = (arr,t) => hex(arr[Math.max(0,Math.min(arr.length-1,Math.floor(t*arr.length)))]);
+const DPAL=['#fff3b0','#ffd23f','#f59a23','#e8650a','#a53d05']; // 變化模式色階（固定刻度 0–30 分）
 const A = op => Math.round(op*255);
 let ver = 0;
+// 柱高（3D 時外框要畫在柱頂，才不會看起來浮在半空）
+// 拉近查某一里時，其他柱子壓低變淡，才不會擋住你查的里
+const focusOn=()=>sel&&is3d&&zoomNow>=12.8;
+const colZ=v=>is3d?(yr===2?Math.max(v.ds,1)*40:Math.max(v.s,2)*14)*colH*(focusOn()&&v!==sel?.25:1):0;
+const topZ=v=>L.score.on&&is3d?colZ(v)*elevK()+2:0;
+const ringPaths=v=>{const z=topZ(v);return v.rings.map(r=>r.map(([x,y])=>[x,y,z]))};
 function buildLayers(){
   const D = deck, out = [];
   if (!V.length) return out;
@@ -90,18 +107,20 @@ function buildLayers(){
   out.push(new D.PolygonLayer({id:'outline',data:V,getPolygon:v=>v.rings,filled:false,stroked:true,getLineColor:[20,20,20,90],lineWidthMinPixels:.6,pickable:false}));
   if (L.old.on) out.push(new D.PolygonLayer({id:'old',data:V,getPolygon:v=>v.rings,stroked:false,
     getFillColor:v=>[...ramp(PAL.old[L.old.pal],(v.pa-0.15)/0.25),A(L.old.op)],updateTriggers:{getFillColor:[L.old.pal,L.old.op,yr]},pickable:true,onClick:clickV}));
+  if (L.twin.on) out.push(new D.PolygonLayer({id:'twin',data:V,getPolygon:v=>v.rings,stroked:true,getLineColor:v=>v.tw<2?[20,20,20,200]:[20,20,20,0],lineWidthMinPixels:1.2,
+    getFillColor:v=>[...hex(PAL.twin[L.twin.pal][v.tw]),A(L.twin.op*(v.tw===3?.45:1))],updateTriggers:{getFillColor:[L.twin.pal,L.twin.op,yr,ver],getLineColor:[yr,ver]},transitions:{getFillColor:{duration:700}},pickable:true,onClick:clickV}));
   if (L.liq.on) out.push(new D.PolygonLayer({id:'liq',data:LIQ,getPolygon:d=>d.poly,stroked:false,
     getFillColor:d=>[...hex(PAL.liq[L.liq.pal][d.c-1]),A(L.liq.op*(d.c===1?1:d.c===2?.8:.6))],updateTriggers:{getFillColor:[L.liq.pal,L.liq.op]},pickable:true}));
   if (L.fire.on && !L.score.on) out.push(new D.PolygonLayer({id:'fire',data:V.filter(v=>v.fire.length),getPolygon:v=>v.rings,stroked:true,
     getFillColor:[...hex(PAL.fire[L.fire.pal][0]),A(L.fire.op*.18)],getLineColor:[20,20,20,140],lineWidthMinPixels:1.2,
     updateTriggers:{getFillColor:[L.fire.pal,L.fire.op]},pickable:true,onClick:clickV}));
   if (L.score.on) out.push(new D.PolygonLayer({id:'score',data:V,getPolygon:v=>v.rings,extruded:true,wireframe:true,
-    getElevation:v=>is3d?Math.max(v.s,2)*14*colH:0,elevationScale:elevK(),
-    getFillColor:v=>v.code===selCode?[...hex('#ffd23f'),255]:[...ramp(PAL.score[L.score.pal],v.s/100),A(L.score.op*(is3d?1:.72))],
+    getElevation:colZ,elevationScale:elevK(),
+    getFillColor:v=>v.code===selCode?[...hex('#ffd23f'),255]:[...(yr===2?ramp(DPAL,v.ds/30):ramp(PAL.score[L.score.pal],v.s/100)),A(L.score.op*(is3d?(focusOn()?.55:1):.72))],
     getLineColor:[20,20,20,160],lineWidthMinPixels:.8,stroked:false,
     material:{ambient:.55,diffuse:.55,shininess:8,specularColor:[40,40,40]},
-    updateTriggers:{getFillColor:[L.score.pal,L.score.op,selCode,ver,is3d,yr],getElevation:[ver,colH,is3d,yr]},
-    transitions:{getElevation:{duration:600},getFillColor:{duration:300}},pickable:true,autoHighlight:true,highlightColor:[255,210,63,220],onClick:clickV}));
+    updateTriggers:{getFillColor:[L.score.pal,L.score.op,selCode,ver,is3d,yr,focusOn()],getElevation:[ver,colH,is3d,yr,selCode,focusOn()]},
+    transitions:{getElevation:{duration:900},getFillColor:{duration:700}},pickable:true,autoHighlight:true,highlightColor:[255,210,63,220],onClick:clickV}));
   if (L.house.on && HOUSES && zoomNow>=13.5) out.push(new D.ScatterplotLayer({id:'house',data:HOUSES.filter(h=>!houseOldOnly||h.age>=30),
     getPosition:h=>[h.x,h.y,is3d&&L.score.on?0:0],getRadius:h=>h.age>=30?7:5,radiusMinPixels:1.5,radiusMaxPixels:5,
     getFillColor:h=>[...hex(PAL.house[L.house.pal][h.age>=30?0:1]),A(L.house.op*.75)],stroked:false,
@@ -113,10 +132,9 @@ function buildLayers(){
       getColor:[...fc,A(L.fire.op)],updateTriggers:{getColor:[L.fire.pal,L.fire.op],getWidth:[zoomNow>=14]},pickable:true,parameters:{depthCompare:'always'}}));
     if(zoomNow<14)out.push(new D.ScatterplotLayer({id:'firec',data:FIRE,getPosition:d=>d.c,getRadius:zoomNow>=14?9:5,radiusUnits:'pixels',radiusMinPixels:4,
       getFillColor:[...fc,255],stroked:true,getLineColor:[20,20,20],lineWidthMinPixels:zoomNow>=14?3:1.5,updateTriggers:{getFillColor:[L.fire.pal]},pickable:true,parameters:{depthCompare:'always'}}));}
-  if (yr && (L.score.on||L.old.on)) out.push(new D.PolygonLayer({id:'newtop',data:V.filter(v=>v.isNew),getPolygon:v=>v.rings,filled:false,stroked:true,getLineColor:hex('#3f5ad8'),lineWidthMinPixels:4,parameters:{depthCompare:'always'}}));
-  if (sel) out.push(new D.PolygonLayer({id:'sel',data:[sel],getPolygon:v=>v.rings,filled:false,stroked:true,getLineColor:[20,20,20,255],lineWidthMinPixels:4,
-    getElevation:0,parameters:{depthCompare:'always'}}));
-  if (pin) out.push(new D.ScatterplotLayer({id:'pin',data:[pin],getPosition:p=>p,getRadius:1,radiusUnits:'pixels',radiusMinPixels:10,
+  if (yr && (L.score.on||L.old.on)) out.push(new D.PathLayer({id:'newtop',data:V.filter(v=>v.isNew).flatMap(v=>ringPaths(v)),getPath:d=>d,getColor:hex('#3f5ad8'),getWidth:4,widthUnits:'pixels',jointRounded:true,updateTriggers:{getPath:[zoomNow,is3d,yr,colH,ver]}}));
+  if (sel) out.push(new D.PathLayer({id:'sel',data:ringPaths(sel),getPath:d=>d,getColor:[20,20,20,255],getWidth:4,widthUnits:'pixels',jointRounded:true,parameters:{depthCompare:'always'}}));
+  if (pin) out.push(new D.ScatterplotLayer({id:'pin',data:[pin],getPosition:p=>[p[0],p[1],sel?topZ(sel)+1:0],getRadius:1,radiusUnits:'pixels',radiusMinPixels:10,
     getFillColor:hex('#e8650a'),stroked:true,getLineColor:[20,20,20],lineWidthMinPixels:3,parameters:{depthCompare:'always'}}));
   return out;
 }
@@ -124,8 +142,8 @@ const TT_STYLE={background:'#ffffff',color:'#141414',border:'3px solid #141414',
 function tooltip({object,layer}){
   if(!object||!layer)return null;
   let h='';
-  if(['score','old','fire'].includes(layer.id)){const v=object;
-    h=`<small style="font-weight:700">${layer.id==='old'?'高齡人口':layer.id==='fire'?'救災巷道所在的里':'危老分數'}</small><br><b style="font-weight:900;font-size:15px">${esc(v.d)} ${esc(v.n)}</b><br>${YL()}分數 <b>${v.s}</b>・第 ${v.r} 名／${N}<br>65 歲以上 ${pct(v.pa)}・老屋 ${pct(v.ha)}${v.isNew&&yr?'<br><b>2035 新進前 30 名</b>':''}`+(v.fire.length?`<br>救災列管 ${v.fire.length} 處`:'')}
+  if(['score','old','fire','twin'].includes(layer.id)){const v=object;
+    h=`<small style="font-weight:700">${layer.id==='old'?'高齡人口':layer.id==='fire'?'救災巷道所在的里':layer.id==='twin'?'雙老熱區：'+TWN[v.tw]:'危老分數'}</small><br><b style="font-weight:900;font-size:15px">${esc(v.d)} ${esc(v.n)}</b><br>${YL()}分數 <b>${v.s}</b>・第 ${v.r} 名／${N}<br>65 歲以上 ${pct(v.pa)}・老屋 ${pct(v.ha)}${yr===2?`<br>十年內分數 +${v.ds}（${v.s0} → ${v.s1}）`:''}${v.isNew&&yr?'<br><b>2035 新進前 30 名</b>':''}`+(v.fire.length?`<br>救災列管 ${v.fire.length} 處`:'')}
   else if(layer.id==='firec'||layer.id==='fireln'){const f=layer.id==='firec'?object:object.f;h=`<small style="font-weight:700">救災巷道（消防局列管）</small><br><b style="font-weight:900;font-size:15px">${esc(f.n)}</b><br>${esc(f.t)}${f.p?'・'+esc(f.p):''}<br>${esc(f.d)} ${esc(f.v)}${f.e?'':'<br>（找不到門牌，標在里的中心）'}`}
   else if(layer.id==='liq'){h=`<small style="font-weight:700">土壤液化潛勢</small><br><b style="font-weight:900">液化潛勢：${['高','中','低'][object.c-1]}</b>`}
   else if(layer.id==='house'){const o=object;h=`<small style="font-weight:700">屋齡（實價登錄成交樣本）・一棟建物</small><br><b style="font-weight:900">屋齡 ${o.age} 年</b>${o.fl?`・${o.fl} 層`:''}<br>${esc(MAT[o.m]||'')}`}
@@ -221,7 +239,7 @@ const liqAt=(x,y)=>{let c=0;for(const d of LIQ){if(inPoly(x,y,d.poly)&&(!c||d.c<
 function near(x,y,m){if(!HOUSES)return null;const kx=Math.cos(y*Math.PI/180)*111320,ky=110540;let n=0,o=0,brick=0,max=0;
   for(const h of HOUSES){const dx=(h.x-x)*kx,dy=(h.y-y)*ky;if(dx*dx+dy*dy<=m*m){n++;if(h.age>=30)o++;if(/磚/.test(MAT[h.m]||''))brick++;if(h.age>max)max=h.age}}
   return{n,o,brick,max}}
-function selectV(v,xy,addr,warn){sel=v;pin=xy;render(v,addr,xy,warn);refresh();legend();
+function selectV(v,xy,addr,warn){sel=v;pin=xy;render(v,addr,xy,warn);refresh();legend();dumbbell();
   if(addr&&matchMedia('(max-width:1000px)').matches)document.querySelector('.result').scrollIntoView({behavior:'smooth',block:'start'});
   const c=xy||[(v.b[0]+v.b[2])/2,(v.b[1]+v.b[3])/2];if(engine)engine.fly(c[0],c[1],xy?14.3:13.4)}
 let lastWarn='';
@@ -240,6 +258,7 @@ function render(v,addr,xy,warn){lastWarn=warn||'';
   const ck='check.html'+(xy?'?'+new URLSearchParams({...(lqv?{liq:lqv}:{}),addr:addr||''}).toString():'');
   $('res').innerHTML=`${warnBox}<div><p class="addr">${esc(addr||'在地圖上點選')}</p><h2 class="vname">${esc(v.d)} ${esc(v.n)}</h2></div>${lq}
   <p class="yrline">${yr?'2035 推估':'現在'}｜現在 ${v.s0} 分・第 ${v.r0} 名 → 2035 ${v.s1} 分・第 ${v.r1} 名${v.isNew?'　<b>2035 新進前 30 名</b>':''}</p>
+  <p class="twline">雙老熱區：${both(v.p0,v.h0)===2?'<b>現在就是</b>':both(v.p1,v.h1)===2?'現在不是，<b>2035 會變成熱區</b>':'現在和 2035 都不是'}</p>
   <div class="tiles"><div class="tile"><div class="k">危老分數（${YL()}）</div><div class="v">${v.s}<small>/ 100</small></div></div>
   <div class="tile"><div class="k">全市排名（${YL()}）</div><div class="v">${v.r}<small>/ ${N}</small></div></div></div>
   <div><span class="lvl">里的風險：${level(v.s)}</span>${v.s<30?'<span class="lvlnote">不代表你家這棟安全</span>':''}</div>
@@ -252,7 +271,9 @@ function render(v,addr,xy,warn){lastWarn=warn||'';
 // ---------- legend & layer panel ----------
 function legend(){const g=[];
   if(sel||pin)g.push(`<span class="g"><span class="sw" style="background:#ffd23f"></span>你查的里 <span class="sw" style="background:#e8650a;border-radius:50%"></span>你查的地址</span>`);
-  if(L.score.on)g.push(`<span class="g">分數 0<span class="ramp">${PAL.score[L.score.pal].map(c=>`<i style="background:${c}"></i>`).join('')}</span>100</span>`);
+  if(L.score.on&&yr===2)g.push(`<span class="g">十年內分數增加 0<span class="ramp">${DPAL.map(c=>`<i style="background:${c}"></i>`).join('')}</span>+30 以上（柱越高升越多）</span>`);
+  else if(L.score.on)g.push(`<span class="g">${YL()}分數 0<span class="ramp">${PAL.score[L.score.pal].map(c=>`<i style="background:${c}"></i>`).join('')}</span>100</span>`);
+  if(L.twin.on){const c=PAL.twin[L.twin.pal],ix=yr?[0,1,2,3]:[0,2,3];g.push(ix.map(i=>`<span class="g"><span class="sw" style="background:${c[i]}"></span>${TWN[i]}</span>`).join(''))}
   if(L.liq.on)g.push(`<span class="g">液化 ${['高','中','低'].map((n,i)=>`<span class="sw" style="background:${PAL.liq[L.liq.pal][i]}"></span>${n}`).join(' ')}</span>`);
   if(L.house.on&&zoomNow<13.5)g.push('<span class="g">屋齡點：拉近地圖才會顯示</span>');
   else if(L.house.on)g.push(`<span class="g"><span class="sw" style="background:${PAL.house[L.house.pal][0]};border-radius:50%"></span>一棟 30 年以上建物（成交樣本）${houseOldOnly?'':` <span class="sw" style="background:${PAL.house[L.house.pal][1]};border-radius:50%"></span>一棟未滿 30 年建物`}</span>`);
@@ -262,7 +283,7 @@ function legend(){const g=[];
   $('legend').innerHTML=g.join('')||'<span>沒有開啟的疊圖</span>'}
 function setOn(k,v){L[k].on=v;if(v&&AREA.includes(k))AREA.forEach(a=>{if(a!==k)L[a].on=false})}
 function save(){store.set('layers3',Object.fromEntries(LAYERS.map(l=>[l.k,{on:L[l.k].on,op:L[l.k].op,pal:L[l.k].pal}])))}
-const SHORT={score:'危老分數',liq:'液化潛勢',house:'屋齡（成交樣本）',old:'高齡人口',fire:'救災巷道'};
+const SHORT={score:'危老分數',twin:'雙老熱區',liq:'液化潛勢',house:'屋齡（成交樣本）',old:'高齡人口',fire:'救災巷道'};
 function chips(){const btn=k=>{const c=PAL[k][L[k].pal];return `<button class="chipb" data-k="${k}" aria-pressed="${L[k].on}"><i style="background:${c[Math.floor(c.length/2)]}"></i>${SHORT[k]}</button>`};
   $('chips').innerHTML='<span class="lbl">底色（選一）</span>'+AREA.map(btn).join('')+'<span class="lbl" style="margin-left:10px">加上點位</span>'+['house','fire'].map(btn).join('')}
 function chipsOld(){$('chips').innerHTML='<span class="lbl">疊圖</span>'+LAYERS.map(({k})=>{const c=PAL[k][L[k].pal];return `<button class="chipb" data-k="${k}" aria-pressed="${L[k].on}"><i style="background:${c[Math.floor(c.length/2)]}"></i>${SHORT[k]}</button>`}).join('')}
@@ -291,9 +312,23 @@ $('presets').addEventListener('click',e=>{const b=e.target.closest('button');if(
   $('presets').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));rescore();ver++;if(sel)render(sel,lastAddr,pin,lastWarn);refresh()});
 $('v3').onclick=()=>{is3d=true;$('v3').setAttribute('aria-pressed','true');$('v2').setAttribute('aria-pressed','false');engine&&engine.setPitch(55);refresh()};
 $('v2').onclick=()=>{is3d=false;$('v2').setAttribute('aria-pressed','true');$('v3').setAttribute('aria-pressed','false');engine&&engine.setPitch(0);refresh()};
-function setYear(y){yr=y;$('y0').setAttribute('aria-pressed',!y);$('y1').setAttribute('aria-pressed',!!y);applyYear();ver++;top10();legend();if(sel)render(sel,lastAddr,pin,lastWarn);refresh();
-  $('yearnote').hidden=!y}
-$('y0').onclick=()=>setYear(0);$('y1').onclick=()=>setYear(1);
+function setYear(y){yr=y;['y0','y1','y2'].forEach((id,i)=>$(id).setAttribute('aria-pressed',i===y));applyYear();ver++;top10();legend();stats();if(sel)render(sel,lastAddr,pin,lastWarn);refresh();
+  $('yearnote').hidden=!y;$('wlabel').textContent=yr===2?'顏色與柱高＝十年內分數增加多少':wl()}
+['y0','y1','y2'].forEach((id,i)=>$(id).onclick=()=>setYear(i));
+// 全市大字：現在 → 2035
+function stats(){if(!V.length)return;const pop=a=>V.reduce((t,v)=>t+a(v),0);
+  const c=[['全市 65 歲以上',CITY[0].toFixed(1)+'%',CITY[1].toFixed(1)+'%'],['雙老熱區',V.filter(v=>both(v.p0,v.h0)===2).length+' 里',V.filter(v=>both(v.p1,v.h1)===2).length+' 里'],['危老分數 60 分以上',V.filter(v=>v.s0>=60).length+' 里',V.filter(v=>v.s1>=60).length+' 里']];
+  $('stats').innerHTML=c.map(([k,a,b])=>`<div class="stat"><div class="k">${k}</div><div class="v"><span class="${yr?'':'on'}">${a}</span><i>→</i><span class="${yr?'on':''}">${b}</span></div><div class="y"><span>現在</span><span>2035 推估</span></div></div>`).join('')}
+const CITY=[24.9,33.3];
+// 現在 → 2035 啞鈴圖
+function dumbbell(){if(!V.length)return;const list=[...V].sort(DB==='top'?(a,b)=>a.r1-b.r1:(a,b)=>b.ds-a.ds||a.r1-b.r1).slice(0,20);
+  const W=760,lw=150,rw=70,top=26,rh=28,H=top+list.length*rh+30,x=s=>lw+(W-lw-rw)*s/100;
+  let g=[0,25,50,75,100].map(t=>`<line x1="${x(t)}" x2="${x(t)}" y1="${top-6}" y2="${H-26}" stroke="#d9cfbf" stroke-width="1.5"/><text x="${x(t)}" y="${H-8}" text-anchor="middle" class="ax">${t}</text>`).join('');
+  g+=list.map((v,i)=>{const y=top+i*rh+rh/2,on=sel&&sel.code===v.code;return `<g class="row" data-c="${v.code}" tabindex="0" role="button" aria-label="${esc(v.d+' '+v.n)}，現在 ${v.s0} 分，2035 ${v.s1} 分">${on?`<rect x="0" y="${y-rh/2}" width="${W}" height="${rh}" fill="#ffd23f"/>`:''}<rect x="0" y="${y-rh/2}" width="${W}" height="${rh}" fill="transparent"/><text x="${lw-12}" y="${y+5}" text-anchor="end" class="nm">${esc(v.d.replace(/區$/,''))} ${esc(v.n)}${v.isNew?' ★':''}</text><line x1="${x(v.s0)}" x2="${x(v.s1)}" y1="${y}" y2="${y}" stroke="#e8650a" stroke-width="5"/><circle cx="${x(v.s0)}" cy="${y}" r="7" fill="#fff" stroke="#141414" stroke-width="2.5"/><circle cx="${x(v.s1)}" cy="${y}" r="8" fill="#a53d05" stroke="#141414" stroke-width="2.5"/><text x="${W-rw+10}" y="${y+5}" class="vl">${v.s0}→${v.s1}</text></g>`}).join('');
+  $('db').innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="現在到 2035 分數變化">${g}</svg>`}
+$('db').addEventListener('click',e=>{const r=e.target.closest('.row');if(!r)return;const v=V.find(x=>x.code===r.dataset.c);if(v)selectV(v,null,'')});
+$('db').addEventListener('keydown',e=>{if(e.key==='Enter'){const r=e.target.closest('.row');if(r)r.dispatchEvent(new MouseEvent('click',{bubbles:true}))}});
+['dbTop','dbRise'].forEach(id=>$(id).onclick=()=>{DB=id==='dbTop'?'top':'rise';$('dbTop').setAttribute('aria-pressed',DB==='top');$('dbRise').setAttribute('aria-pressed',DB==='rise');dumbbell()});
 function top10(){if(!V.length)return;const list=[...V].sort((a,b)=>(yr?a.r1-b.r1:a.r0-b.r0)).slice(0,10);
   $('top10h').textContent=`全市前 10 名（${YL()}）`;
   $('top10').innerHTML=list.map(v=>`<li><button data-c="${v.code}"><span class="rk">${yr?v.r1:v.r0}</span><span class="nm">${esc(v.d)} ${esc(v.n)}${yr&&v.isNew?' <em>新進</em>':''}</span><span class="sc">${yr?v.s1:v.s0} 分</span></button></li>`).join('')}
@@ -366,7 +401,7 @@ if(qs.get('q')){q.value=qs.get('q');$('clear').hidden=false}
 const enginePromise=(CFG.googleMapsApiKey?startGoogle().catch(err=>{console.warn(err);return startFree()}):startFree()).catch(err=>{console.error(err);$('engine').textContent='地圖載入失敗'});
 Promise.all([load('data/villages.json'),load('data/liquefaction.json')]).then(([vs,lq])=>{
   V=vs.map(a=>({code:a[0],d:a[1],n:a[2],x0:[a[3],a[4],a[5]],x1:a[14]?a[14].slice(0,3):[a[3],a[4],a[5]],p1:a[14]?a[14][3]:a[8],h1:a[14]?a[14][4]:a[9],hi:a[6],mid:a[7],p0:a[8],h0:a[9],hd:a[10],fire:a[11],rings:a[12],hn:a[13]||0,b:bbox(a[12]),L:a[6]+a[7]*.5}));
-  N=V.length;
+  N=V.length;TP=q75(V.map(v=>v.p0));TH=q75(V.map(v=>v.h0));
   LIQ=[];for(const[c,mp]of lq)for(const poly of mp)LIQ.push({c,poly}); // MultiPolygon → 每個 polygon 一筆
   rescore();
   return enginePromise}).then(()=>{refresh();$('loading').hidden=true;
