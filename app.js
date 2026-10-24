@@ -326,6 +326,8 @@ $('f').addEventListener('submit',e=>{e.preventDefault();items=suggest(q.value);i
 
 // ---------- boot ----------
 panel();chips();legend();
+// 單棟頁「回里級地圖」會帶 ?q=地址，門牌載入後自動查詢
+if(qs.get('q')){q.value=qs.get('q');$('clear').hidden=false}
 const enginePromise=(CFG.googleMapsApiKey?startGoogle().catch(err=>{console.warn(err);return startFree()}):startFree()).catch(err=>{console.error(err);$('engine').textContent='地圖載入失敗'});
 Promise.all([load('data/villages.json'),load('data/liquefaction.json')]).then(([vs,lq])=>{
   V=vs.map(a=>({code:a[0],d:a[1],n:a[2],x:[a[3],a[4],a[5]],hi:a[6],mid:a[7],p0:a[8],h0:a[9],hd:a[10],fire:a[11],rings:a[12],hn:a[13]||0,b:bbox(a[12]),L:a[6]+a[7]*.5}));
