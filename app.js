@@ -86,7 +86,7 @@ function rescore(){const w=weights(),t=w.liq+w.old+w.house;
   [...V].sort((a,b)=>b.s0-a.s0||b.L-a.L||b.p0-a.p0).forEach((v,i)=>v.r0=i+1);
   [...V].sort((a,b)=>b.s1-a.s1||b.L-a.L||b.p1-a.p1).forEach((v,i)=>v.r1=i+1);
   applyYear();top10();stats();dumbbell();
-  $('wlabel').textContent=yr===2?'顏色與柱高＝十年內分數增加多少':wl();
+  $('wlabel').textContent=wl();
   $('wdesc').textContent=`權重：液化面積 ${w.liq}、高齡人口 ${w.old}、老屋比例 ${w.house}。換權重後排名會重算。`}
 
 // ---------- layers ----------
@@ -324,7 +324,7 @@ $('presets').addEventListener('click',e=>{const b=e.target.closest('button');if(
 $('v3').onclick=()=>{is3d=true;$('v3').setAttribute('aria-pressed','true');$('v2').setAttribute('aria-pressed','false');engine&&engine.setPitch(55);refresh()};
 $('v2').onclick=()=>{is3d=false;$('v2').setAttribute('aria-pressed','true');$('v3').setAttribute('aria-pressed','false');engine&&engine.setPitch(0);refresh()};
 function setYear(y){yr=y;if(y===2&&!L.score.on){setOn('score',true);save();chips();panel()}['y0','y1','y2'].forEach((id,i)=>$(id).setAttribute('aria-pressed',i===y));applyYear();ver++;top10();legend();stats();if(sel)render(sel,lastAddr,pin,lastWarn);refresh();
-  $('yearnote').hidden=!y;$('modebadge').hidden=y!==2;$('wlabel').textContent=yr===2?'顏色與柱高＝十年內分數增加多少':wl()}
+  $('yearnote').hidden=!y;$('modebadge').hidden=y!==2;$('wlabel').textContent=wl()}
 ['y0','y1','y2'].forEach((id,i)=>$(id).onclick=()=>setYear(i));
 // 全市大字：現在 → 2035
 function stats(){if(!V.length||!$('stats'))return;const pop=a=>V.reduce((t,v)=>t+a(v),0);
