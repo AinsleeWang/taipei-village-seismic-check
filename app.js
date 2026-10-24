@@ -28,7 +28,7 @@ const LAYERS = [
   {k:'liq', name:'土壤液化潛勢', tag:'真實', on:false, op:.55, pal:'blue', desc:'高／中／低潛勢範圍。'},
   {k:'house', name:'逐棟屋齡（實價登錄成交樣本）', tag:'成交樣本', on:false, op:.85, pal:'ink', desc:'只有 2011–2026 年有成交紀錄的建物，約占全市 28%，而且偏新，不是全部建物；屋齡用登錄的建築完成年，座標依門牌定位（第三方整理）。'},
   {k:'old', name:'高齡人口比例', tag:'真實', on:false, op:.75, pal:'violet', desc:'65 歲以上人口比例，以里為單位。'},
-  {k:'fire', name:'火災搶救困難、長巷道', tag:'真實', on:false, op:.9, pal:'red', desc:'消防局列管的 185 處巷道。清冊只有路名，我們用門牌資料把每條巷道的門牌畫成點，大圓點是巷道位置。'}
+  {k:'fire', name:'火災搶救困難、長巷道', tag:'真實', on:false, op:.9, pal:'red', desc:'消防局列管的 185 處巷道。清冊只有路名，線是用那條巷子的門牌排出來的大致走向，不是精確的道路線。'}
 ];
 // 各圖層資料來源（頁尾與面板共用）
 const DT=id=>'https://data.taipei/dataset/detail?id='+id;
@@ -56,7 +56,7 @@ let is3d = true, zoomNow = HOME.zoom;
 const elevK = () => Math.min(1, Math.pow(2, (11.6 - zoomNow) * 0.9));
 
 // ---------- data ----------
-let V=[], LIQ=[], HOUSES=null, MAT=[], ADDR=null, FIRE=[], FIREPTS=[];
+let V=[], LIQ=[], HOUSES=null, MAT=[], ADDR=null, FIRE=[], FIRELN=[];
 let sel=null, pin=null, N=0;
 const load = u => fetch(u).then(r=>{if(!r.ok)throw new Error(u+' '+r.status);return r.json()});
 
@@ -101,9 +101,11 @@ function buildLayers(){
     getFillColor:h=>[...hex(PAL.house[L.house.pal][h.age>=30?0:1]),A(L.house.op*.75)],stroked:false,
     updateTriggers:{getFillColor:[L.house.pal,L.house.op]},pickable:true,parameters:{depthCompare:'always'}}));
   if (L.fire.on && FIRE.length){const fc=hex(PAL.fire[L.fire.pal][0]);
-    if(zoomNow>=14.5)out.push(new D.ScatterplotLayer({id:'firepts',data:FIREPTS,getPosition:d=>d.p,getRadius:3,radiusUnits:'pixels',radiusMinPixels:2.5,radiusMaxPixels:5,
-      getFillColor:[...fc,A(L.fire.op)],stroked:true,getLineColor:[20,20,20,A(L.fire.op)],lineWidthMinPixels:1,updateTriggers:{getFillColor:[L.fire.pal,L.fire.op],getLineColor:[L.fire.op]},pickable:true,parameters:{depthCompare:'always'}}));
-    out.push(new D.ScatterplotLayer({id:'firec',data:FIRE,getPosition:d=>d.c,getRadius:zoomNow>=14?9:5,radiusUnits:'pixels',radiusMinPixels:4,
+    out.push(new D.PathLayer({id:'firecase',data:FIRELN,getPath:d=>d.p,getWidth:zoomNow>=14?9:5,widthUnits:'pixels',widthMinPixels:4,capRounded:true,jointRounded:true,
+      getColor:[20,20,20,A(L.fire.op)],updateTriggers:{getColor:[L.fire.op],getWidth:[zoomNow>=14]},pickable:false,parameters:{depthCompare:'always'}}));
+    out.push(new D.PathLayer({id:'fireln',data:FIRELN,getPath:d=>d.p,getWidth:zoomNow>=14?5:2.5,widthUnits:'pixels',widthMinPixels:2,capRounded:true,jointRounded:true,
+      getColor:[...fc,A(L.fire.op)],updateTriggers:{getColor:[L.fire.pal,L.fire.op],getWidth:[zoomNow>=14]},pickable:true,parameters:{depthCompare:'always'}}));
+    if(zoomNow<14)out.push(new D.ScatterplotLayer({id:'firec',data:FIRE,getPosition:d=>d.c,getRadius:zoomNow>=14?9:5,radiusUnits:'pixels',radiusMinPixels:4,
       getFillColor:[...fc,255],stroked:true,getLineColor:[20,20,20],lineWidthMinPixels:zoomNow>=14?3:1.5,updateTriggers:{getFillColor:[L.fire.pal]},pickable:true,parameters:{depthCompare:'always'}}));}
   if (sel) out.push(new D.PolygonLayer({id:'sel',data:[sel],getPolygon:v=>v.rings,filled:false,stroked:true,getLineColor:[20,20,20,255],lineWidthMinPixels:4,
     getElevation:0,parameters:{depthCompare:'always'}}));
@@ -117,7 +119,7 @@ function tooltip({object,layer}){
   let h='';
   if(['score','old','fire'].includes(layer.id)){const v=object;
     h=`<small style="font-weight:700">${layer.id==='old'?'高齡人口':layer.id==='fire'?'救災巷道所在的里':'危老分數'}</small><br><b style="font-weight:900;font-size:15px">${esc(v.d)} ${esc(v.n)}</b><br>分數 <b>${v.s}</b>・第 ${v.r} 名／${N}<br>65 歲以上 ${pct(v.p0)}・老屋 ${pct(v.h0)}`+(v.fire.length?`<br>救災列管 ${v.fire.length} 處`:'')}
-  else if(layer.id==='firec'||layer.id==='firepts'){const f=layer.id==='firec'?object:object.f;h=`<small style="font-weight:700">救災巷道（消防局列管）${layer.id==='firepts'?'・這條巷子的門牌':''}</small><br><b style="font-weight:900;font-size:15px">${esc(f.n)}</b><br>${esc(f.t)}${f.p?'・'+esc(f.p):''}<br>${esc(f.d)} ${esc(f.v)}${f.e?'':'<br>（找不到門牌，標在里的中心）'}`}
+  else if(layer.id==='firec'||layer.id==='fireln'){const f=layer.id==='firec'?object:object.f;h=`<small style="font-weight:700">救災巷道（消防局列管）</small><br><b style="font-weight:900;font-size:15px">${esc(f.n)}</b><br>${esc(f.t)}${f.p?'・'+esc(f.p):''}<br>${esc(f.d)} ${esc(f.v)}${f.e?'':'<br>（找不到門牌，標在里的中心）'}`}
   else if(layer.id==='liq'){h=`<small style="font-weight:700">土壤液化潛勢</small><br><b style="font-weight:900">液化潛勢：${['高','中','低'][object.c-1]}</b>`}
   else if(layer.id==='house'){const o=object;h=`<small style="font-weight:700">屋齡（實價登錄成交樣本）・一棟建物</small><br><b style="font-weight:900">屋齡 ${o.age} 年</b>${o.fl?`・${o.fl} 層`:''}<br>${esc(MAT[o.m]||'')}`}
   else return null;
@@ -247,7 +249,7 @@ function legend(){const g=[];
   if(L.house.on&&zoomNow<13.5)g.push('<span class="g">屋齡點：拉近地圖才會顯示</span>');
   else if(L.house.on)g.push(`<span class="g"><span class="sw" style="background:${PAL.house[L.house.pal][0]};border-radius:50%"></span>一棟 30 年以上建物（成交樣本）${houseOldOnly?'':` <span class="sw" style="background:${PAL.house[L.house.pal][1]};border-radius:50%"></span>一棟未滿 30 年建物`}</span>`);
   if(L.old.on)g.push(`<span class="g">高齡 15%<span class="ramp">${PAL.old[L.old.pal].map(c=>`<i style="background:${c}"></i>`).join('')}</span>40%</span>`);
-  if(L.fire.on)g.push(`<span class="g"><span class="sw" style="background:${PAL.fire[L.fire.pal][0]};border-radius:50%;width:18px;height:18px;border-width:3px"></span>救災巷道位置 <span class="sw" style="background:${PAL.fire[L.fire.pal][0]};border-radius:50%;width:9px;height:9px;border-width:1px"></span>這條巷子的門牌${zoomNow<14.5?'（拉近才出現）':''}</span>`);
+  if(L.fire.on)g.push(`<span class="g"><span style="display:inline-block;width:28px;height:7px;background:${PAL.fire[L.fire.pal][0]};border:2px solid #141414;border-radius:4px;vertical-align:middle;margin-right:4px"></span>救災巷道（消防局列管）${zoomNow<14?` <span class="sw" style="background:${PAL.fire[L.fire.pal][0]};border-radius:50%"></span>全市畫面的巷道位置`:''}</span>`);
   $('legend').innerHTML=g.join('')||'<span>沒有開啟的疊圖</span>'}
 function setOn(k,v){L[k].on=v;if(v&&AREA.includes(k))AREA.forEach(a=>{if(a!==k)L[a].on=false})}
 function save(){store.set('layers3',Object.fromEntries(LAYERS.map(l=>[l.k,{on:L[l.k].on,op:L[l.k].op,pal:L[l.k].pal}])))}
@@ -354,7 +356,7 @@ Promise.all([load('data/villages.json'),load('data/liquefaction.json')]).then(([
   return enginePromise}).then(()=>{refresh();$('loading').hidden=true;
     const h=decodeURIComponent(location.hash.slice(1));if(h){q.value=h;items=suggest(h)}})
   .catch(e=>{console.error(e);$('loading').textContent='資料載入失敗'});
-load('data/fire.json').then(d=>{FIRE=d;FIREPTS=d.flatMap(f=>f.pts.map(p=>({p,f})));if(L.fire.on)refresh()});
+load('data/fire.json').then(d=>{FIRE=d;FIRELN=d.flatMap(f=>(f.ln&&f.ln.length?f.ln:[[f.c,f.c]]).map(p=>({p,f})));if(L.fire.on)refresh()});
 load('data/houses.json').then(d=>{MAT=d.mat;const p=d.p,o=[];for(let i=0;i<p.length;i+=5)if(p[i+2]<=96)o.push({x:p[i],y:p[i+1],age:p[i+2],fl:p[i+3],m:p[i+4]});HOUSES=o;if(L.house.on)refresh();if(sel)render(sel,lastAddr,pin,lastWarn)});
 load('data/addresses.json').then(d=>{ADDR=d;$('hint').textContent=`可查 ${d.s.length.toLocaleString()} 條路段巷弄、約 25 萬個門牌（內政部門牌位置資料）。`;
   if(q.value){items=suggest(q.value);if(items.length)pick(items[0])}}).catch(()=>{$('hint').textContent='門牌資料載入失敗，請重新整理。'});
