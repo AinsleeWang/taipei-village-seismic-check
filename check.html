@@ -221,7 +221,7 @@ footer p{margin:0}
         <div class="togg" id="mode"><button data-m="floor" aria-pressed="true">地板（手機平放）</button><button data-m="wall" aria-pressed="false">柱子／牆（手機直立貼著）</button></div>
         <p class="sub" id="modeHint">把手機螢幕朝上平放在地板上，最好放在房間中間、沒有地磚接縫的地方。拿掉手機殼比較準。<b>不要量浴室、陽台、廚房</b>，那些地板本來就做了排水的坡度。</p>
       </div>
-      <div class="row" id="measRow"><button class="btn y" id="start">開始量</button><span class="or" id="orTxt">或直接輸入</span><span class="row" style="gap:8px"><input id="manDeg" type="text" inputmode="decimal" placeholder="度數，例如 -1" aria-label="傾斜度數"><button class="btn w" id="manAdd">記下</button></span><button class="linkbtn" id="howLevel" type="button">怎麼用水平儀量？</button></div>
+      <div class="row" id="measRow"><button class="btn y" id="start">開始量</button><span class="or" id="orTxt">或直接輸入度數（負號不用打）</span><span class="row" style="gap:8px"><input id="manDeg" type="text" inputmode="decimal" placeholder="度數，例如 1" aria-label="傾斜度數（負號不用打）"><button class="btn w" id="manAdd">記下</button></span><button class="linkbtn" id="howLevel" type="button">怎麼用水平儀量？</button></div>
       <p class="sub" id="sensorMsg" style="margin:-6px 0 0">按「開始量」用手機感測器量；或用手機的水平儀 App 量好，直接輸入度數。iPhone 會先問你要不要允許「動作與方向」，請按允許。</p>
       <div class="level" id="levelBox" hidden>
         <div class="dial" id="dial"><i style="width:60px;height:60px"></i><i style="width:120px;height:120px"></i><span class="bar" hidden></span><span class="bub" id="bub"></span></div>
@@ -520,7 +520,7 @@ function tiltDone(){
   }
 }
 // 一開始就能自己輸入；電腦沒有感測器，直接收起「開始量」
-if (!isMobile){ $('#start').hidden = true; $('#orTxt').textContent = '輸入度數'; $('#sensorMsg').textContent = '電腦沒有傾斜感測器。可以用手機的水平儀 App 量好，把度數填在這裡。'; }
+if (!isMobile){ $('#start').hidden = true; $('#orTxt').textContent = '輸入度數（負號不用打）'; $('#sensorMsg').textContent = '電腦沒有傾斜感測器。可以用手機的水平儀 App 量好，把度數填在這裡。'; }
 $('#howLevel').onclick = () => { const d = $('#levelDlg'); if (d.showModal) d.showModal(); else d.setAttribute('open', ''); };
 const closeLevel = () => { const d = $('#levelDlg'); if (d.close) d.close(); else d.removeAttribute('open'); $('#manDeg').focus(); };
 $('#levelDlgX').onclick = closeLevel; $('#levelDlgOk').onclick = closeLevel;
