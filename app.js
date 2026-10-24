@@ -35,7 +35,8 @@ const PRESETS = [
   {id:'dis',label:'防災優先',w:{liq:50,old:20,house:30}},
   {id:'eld',label:'照顧高齡',w:{liq:30,old:50,house:20}}
 ];
-const st = store.get('layers', {});
+const st = store.get('layers2', {});
+const AREA=['score','liq','old']; // 面狀圖層一次只開一層，才不會疊成一片灰
 const L = Object.fromEntries(LAYERS.map(l=>[l.k,{...l,...(st[l.k]||{})}]));
 let preset = store.get('preset','bal');
 let houseOldOnly = store.get('houseOldOnly', true);
@@ -80,20 +81,20 @@ function buildLayers(){
     updateTriggers:{getFillColor:[L.fire.pal,L.fire.op]},pickable:true,onClick:clickV}));
   if (L.score.on) out.push(new D.PolygonLayer({id:'score',data:V,getPolygon:v=>v.rings,extruded:true,wireframe:true,
     getElevation:v=>is3d?Math.max(v.s,2)*14*colH:0,elevationScale:elevK(),
-    getFillColor:v=>v.code===selCode?[...hex('#ffd23f'),255]:[...ramp(PAL.score[L.score.pal],v.s/100),A(L.score.op*(is3d?1:.6))],
+    getFillColor:v=>v.code===selCode?[...hex('#ffd23f'),255]:[...ramp(PAL.score[L.score.pal],v.s/100),A(L.score.op*(is3d?1:.72))],
     getLineColor:[20,20,20,160],lineWidthMinPixels:.8,stroked:false,
     material:{ambient:.55,diffuse:.55,shininess:8,specularColor:[40,40,40]},
     updateTriggers:{getFillColor:[L.score.pal,L.score.op,selCode,ver,is3d],getElevation:[ver,colH,is3d]},
     transitions:{getElevation:{duration:600},getFillColor:{duration:300}},pickable:true,autoHighlight:true,highlightColor:[255,210,63,220],onClick:clickV}));
-  if (L.house.on && HOUSES) out.push(new D.ScatterplotLayer({id:'house',data:HOUSES.filter(h=>!houseOldOnly||h.age>=30),
-    getPosition:h=>[h.x,h.y,is3d&&L.score.on?0:0],getRadius:h=>h.age>=30?9:6,radiusMinPixels:1.4,radiusMaxPixels:7,
-    getFillColor:h=>[...hex(PAL.house[L.house.pal][h.age>=30?0:1]),A(L.house.op)],stroked:false,
+  if (L.house.on && HOUSES && zoomNow>=13.5) out.push(new D.ScatterplotLayer({id:'house',data:HOUSES.filter(h=>!houseOldOnly||h.age>=30),
+    getPosition:h=>[h.x,h.y,is3d&&L.score.on?0:0],getRadius:h=>h.age>=30?7:5,radiusMinPixels:1.5,radiusMaxPixels:5,
+    getFillColor:h=>[...hex(PAL.house[L.house.pal][h.age>=30?0:1]),A(L.house.op*.75)],stroked:false,
     updateTriggers:{getFillColor:[L.house.pal,L.house.op]},pickable:true,parameters:{depthCompare:'always'}}));
   if (L.fire.on && FIRE.length){const fc=hex(PAL.fire[L.fire.pal][0]);
-    out.push(new D.ScatterplotLayer({id:'firepts',data:FIREPTS,getPosition:d=>d.p,getRadius:3,radiusUnits:'pixels',radiusMinPixels:2.5,radiusMaxPixels:5,
+    if(zoomNow>=14.5)out.push(new D.ScatterplotLayer({id:'firepts',data:FIREPTS,getPosition:d=>d.p,getRadius:3,radiusUnits:'pixels',radiusMinPixels:2.5,radiusMaxPixels:5,
       getFillColor:[...fc,A(L.fire.op)],stroked:true,getLineColor:[20,20,20,A(L.fire.op)],lineWidthMinPixels:1,updateTriggers:{getFillColor:[L.fire.pal,L.fire.op],getLineColor:[L.fire.op]},pickable:true,parameters:{depthCompare:'always'}}));
-    out.push(new D.ScatterplotLayer({id:'firec',data:FIRE,getPosition:d=>d.c,getRadius:9,radiusUnits:'pixels',radiusMinPixels:9,
-      getFillColor:[...fc,255],stroked:true,getLineColor:[20,20,20],lineWidthMinPixels:3,updateTriggers:{getFillColor:[L.fire.pal]},pickable:true,parameters:{depthCompare:'always'}}));}
+    out.push(new D.ScatterplotLayer({id:'firec',data:FIRE,getPosition:d=>d.c,getRadius:zoomNow>=14?9:5,radiusUnits:'pixels',radiusMinPixels:4,
+      getFillColor:[...fc,255],stroked:true,getLineColor:[20,20,20],lineWidthMinPixels:zoomNow>=14?3:1.5,updateTriggers:{getFillColor:[L.fire.pal]},pickable:true,parameters:{depthCompare:'always'}}));}
   if (sel) out.push(new D.PolygonLayer({id:'sel',data:[sel],getPolygon:v=>v.rings,filled:false,stroked:true,getLineColor:[20,20,20,255],lineWidthMinPixels:4,
     getElevation:0,parameters:{depthCompare:'always'}}));
   if (pin) out.push(new D.ScatterplotLayer({id:'pin',data:[pin],getPosition:p=>p,getRadius:1,radiusUnits:'pixels',radiusMinPixels:10,
@@ -150,7 +151,7 @@ async function startFree(){
   map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'top-right');
   const ov=new deck.MapboxOverlay({interleaved:true,layers:[],getTooltip:tooltip});
   map.addControl(ov);
-  map.on('zoomend',()=>{const z=map.getZoom();if(Math.abs(z-zoomNow)>.2){zoomNow=z;refresh()}});
+  map.on('zoomend',()=>{const z=map.getZoom();if(Math.abs(z-zoomNow)>.2){zoomNow=z;refresh();legend()}});
   map.on('click',e=>{ if(!ov.pickObject({x:e.point.x,y:e.point.y,radius:2})){const v=findV(e.lngLat.lng,e.lngLat.lat);if(v)selectV(v,null,'')} });
   engine={name:'free',setLayers:l=>ov.setProps({layers:l}),
     fly:(lng,lat,zoom)=>map.flyTo({center:[lng,lat],zoom,pitch:is3d?55:0,duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:1400,essential:true}),
@@ -165,7 +166,7 @@ function startGoogle(){return new Promise((res,rej)=>{
     const map=new google.maps.Map(el,opt);
     const ov=new deck.GoogleMapsOverlay({interleaved:vec,layers:[],getTooltip:tooltip});
     ov.setMap(map);
-    map.addListener('zoom_changed',()=>{const z=map.getZoom()-.3;if(Math.abs(z-zoomNow)>.2){zoomNow=z;refresh()}});
+    map.addListener('zoom_changed',()=>{const z=map.getZoom()-.3;if(Math.abs(z-zoomNow)>.2){zoomNow=z;refresh();legend()}});
     map.addListener('click',e=>{const v=findV(e.latLng.lng(),e.latLng.lat());if(v)selectV(v,null,'')});
     engine={name:'google',setLayers:l=>ov.setProps({layers:l}),
       fly:(lng,lat,zoom)=>{map.moveCamera({center:{lat,lng},zoom:zoom+.3,tilt:vec&&is3d?55:0,heading:vec&&is3d?-12:0})},
@@ -232,14 +233,18 @@ function render(v,addr,xy,warn){lastWarn=warn||'';
 function legend(){const g=[];
   if(L.score.on)g.push(`<span class="g">分數 0<span class="ramp">${PAL.score[L.score.pal].map(c=>`<i style="background:${c}"></i>`).join('')}</span>100</span>`);
   if(L.liq.on)g.push(`<span class="g">液化 ${['高','中','低'].map((n,i)=>`<span class="sw" style="background:${PAL.liq[L.liq.pal][i]}"></span>${n}`).join(' ')}</span>`);
-  if(L.house.on)g.push(`<span class="g"><span class="sw" style="background:${PAL.house[L.house.pal][0]};border-radius:50%"></span>30 年以上（成交樣本）${houseOldOnly?'':` <span class="sw" style="background:${PAL.house[L.house.pal][1]};border-radius:50%"></span>未滿 30 年`}</span>`);
+  if(L.house.on&&zoomNow<13.5)g.push('<span class="g">屋齡點：拉近地圖才會顯示</span>');
+  else if(L.house.on)g.push(`<span class="g"><span class="sw" style="background:${PAL.house[L.house.pal][0]};border-radius:50%"></span>30 年以上（成交樣本）${houseOldOnly?'':` <span class="sw" style="background:${PAL.house[L.house.pal][1]};border-radius:50%"></span>未滿 30 年`}</span>`);
   if(L.old.on)g.push(`<span class="g">高齡 15%<span class="ramp">${PAL.old[L.old.pal].map(c=>`<i style="background:${c}"></i>`).join('')}</span>40%</span>`);
   if(L.fire.on)g.push(`<span class="g"><span class="sw" style="background:${PAL.fire[L.fire.pal][0]};border-radius:50%;width:18px;height:18px;border-width:3px"></span>列管巷道 <span class="sw" style="background:${PAL.fire[L.fire.pal][0]};border-radius:50%;width:9px;height:9px;border-width:1px"></span>巷道門牌</span>`);
   $('legend').innerHTML=g.join('')||'<span>沒有開啟的疊圖</span>'}
-function save(){store.set('layers',Object.fromEntries(LAYERS.map(l=>[l.k,{on:L[l.k].on,op:L[l.k].op,pal:L[l.k].pal}])))}
+function setOn(k,v){L[k].on=v;if(v&&AREA.includes(k))AREA.forEach(a=>{if(a!==k)L[a].on=false})}
+function save(){store.set('layers2',Object.fromEntries(LAYERS.map(l=>[l.k,{on:L[l.k].on,op:L[l.k].op,pal:L[l.k].pal}])))}
 const SHORT={score:'危老分數',liq:'液化潛勢',house:'屋齡（成交樣本）',old:'高齡人口',fire:'救災巷道'};
-function chips(){$('chips').innerHTML='<span class="lbl">疊圖</span>'+LAYERS.map(({k})=>{const c=PAL[k][L[k].pal];return `<button class="chipb" data-k="${k}" aria-pressed="${L[k].on}"><i style="background:${c[Math.floor(c.length/2)]}"></i>${SHORT[k]}</button>`}).join('')}
-$('chips').addEventListener('click',e=>{const b=e.target.closest('.chipb');if(!b)return;const k=b.dataset.k;L[k].on=!L[k].on;save();panel();chips();legend();refresh()});
+function chips(){const btn=k=>{const c=PAL[k][L[k].pal];return `<button class="chipb" data-k="${k}" aria-pressed="${L[k].on}"><i style="background:${c[Math.floor(c.length/2)]}"></i>${SHORT[k]}</button>`};
+  $('chips').innerHTML='<span class="lbl">底色（選一）</span>'+AREA.map(btn).join('')+'<span class="lbl" style="margin-left:10px">加上點位</span>'+['house','fire'].map(btn).join('')}
+function chipsOld(){$('chips').innerHTML='<span class="lbl">疊圖</span>'+LAYERS.map(({k})=>{const c=PAL[k][L[k].pal];return `<button class="chipb" data-k="${k}" aria-pressed="${L[k].on}"><i style="background:${c[Math.floor(c.length/2)]}"></i>${SHORT[k]}</button>`}).join('')}
+$('chips').addEventListener('click',e=>{const b=e.target.closest('.chipb');if(!b)return;const k=b.dataset.k;setOn(k,!L[k].on);save();panel();chips();legend();refresh()});
 function panel(){
   $('presets').innerHTML=PRESETS.map(p=>`<button data-p="${p.id}" aria-pressed="${p.id===preset}">${p.label}</button>`).join('');
   $('laylist').innerHTML=LAYERS.map(({k})=>{const l=L[k];return `<div class="lay" data-k="${k}" ${l.on?'':'data-off'}>
@@ -252,7 +257,7 @@ function panel(){
   </div>`}).join('');
 }
 $('laylist').addEventListener('input',e=>{const lay=e.target.closest('.lay');if(!lay)return;const k=lay.dataset.k;
-  if(e.target.id==='on-'+k){L[k].on=e.target.checked;e.target.checked?lay.removeAttribute('data-off'):lay.setAttribute('data-off','')}
+  if(e.target.id==='on-'+k){setOn(k,e.target.checked);panel()}
   else if(e.target.id==='op-'+k)L[k].op=+e.target.value;
   else if(e.target.id==='colh'){colH=+e.target.value;store.set('colH',colH)}
   else if(e.target.id==='oldonly'){houseOldOnly=e.target.checked;store.set('houseOldOnly',houseOldOnly)}
