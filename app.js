@@ -334,7 +334,7 @@ function stats(){if(!V.length)return;const pop=a=>V.reduce((t,v)=>t+a(v),0);
 const CITY=[24.9,33.3];
 // 現在 → 2035 啞鈴圖
 function dumbbell(){if(!V.length)return;const list=[...V].sort(DB==='top'?(a,b)=>a.r1-b.r1:(a,b)=>b.ds-a.ds||a.r1-b.r1).slice(0,20);
-  const W=760,lw=150,rw=70,top=26,rh=28,H=top+list.length*rh+30,x=s=>lw+(W-lw-rw)*s/100;
+  const W=620,lw=130,rw=64,top=20,rh=24,H=top+list.length*rh+30,x=s=>lw+(W-lw-rw)*s/100;
   let g=[0,25,50,75,100].map(t=>`<line x1="${x(t)}" x2="${x(t)}" y1="${top-6}" y2="${H-26}" stroke="#d9cfbf" stroke-width="1.5"/><text x="${x(t)}" y="${H-8}" text-anchor="middle" class="ax">${t}</text>`).join('');
   g+=list.map((v,i)=>{const y=top+i*rh+rh/2,on=sel&&sel.code===v.code;return `<g class="row" data-c="${v.code}" tabindex="0" role="button" aria-label="${esc(v.d+' '+v.n)}，現在 ${v.s0} 分，2035 ${v.s1} 分">${on?`<rect x="0" y="${y-rh/2}" width="${W}" height="${rh}" fill="#ffd23f"/>`:''}<rect x="0" y="${y-rh/2}" width="${W}" height="${rh}" fill="transparent"/><text x="${lw-12}" y="${y+5}" text-anchor="end" class="nm">${esc(v.d.replace(/區$/,''))} ${esc(v.n)}${v.isNew?' ★':''}</text><line x1="${x(v.s0)}" x2="${x(v.s1)}" y1="${y}" y2="${y}" stroke="#e8650a" stroke-width="5"/><circle cx="${x(v.s0)}" cy="${y}" r="7" fill="#fff" stroke="#141414" stroke-width="2.5"/><circle cx="${x(v.s1)}" cy="${y}" r="8" fill="#a53d05" stroke="#141414" stroke-width="2.5"/><text x="${W-rw+10}" y="${y+5}" class="vl">${v.s0}→${v.s1}</text></g>`}).join('');
   $('db').innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="現在到 2035 分數變化">${g}</svg>`}
@@ -411,7 +411,10 @@ panel();chips();legend();
 // 手機上進階設定預設收起來（桌機是地圖左邊的直式欄）
 if(matchMedia('(max-width:1000px)').matches)$('layers').open=false;
 // 桌機：進階設定預設收起，左邊箭頭展開／收合，地圖跟著變寬
-$('settab').onclick=()=>{const w=$('mapwrap'),open=w.classList.toggle('shut')===false;$('settab').setAttribute('aria-expanded',open);setTimeout(()=>window.dispatchEvent(new Event('resize')),30)};
+function toggleSet(){const w=$('mapwrap'),open=w.classList.toggle('shut')===false;$('settab').setAttribute('aria-expanded',open);setTimeout(()=>window.dispatchEvent(new Event('resize')),30)}
+$('settab').onclick=toggleSet;
+// 桌機上點「進階設定」標題也能收起（手機維持原本的展開／收合）
+$('layers').querySelector('summary').addEventListener('click',e=>{if(!matchMedia('(max-width:1000px)').matches){e.preventDefault();toggleSet()}});
 // 單棟頁「回里級地圖」會帶 ?q=地址，門牌載入後自動查詢
 if(qs.get('q')){q.value=qs.get('q');$('clear').hidden=false}
 const enginePromise=(CFG.googleMapsApiKey?startGoogle().catch(err=>{console.warn(err);return startFree()}):startFree()).catch(err=>{console.error(err);$('engine').textContent='地圖載入失敗'});
