@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>危老檢查你我他｜上任百日實施方案</title>
+<meta name="description" content="危老檢查你我他：市府上任 100 天的三階段時程、局處分工、KPI 與經費。">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* 版面：單欄文件，PUMA 色塊＋黑粗框硬陰影只用在時程三段與 KPI；其餘保持安靜 */
+:root{
+  --bg:#fbf5ea; --paper:#ffffff; --ink:#141414; --muted:#5d584f; --line:#141414; --soft:#e9e2d4;
+  --orange:#e8650a; --blue:#3f5ad8; --yellow:#ffd23f; --onacc:#ffffff; --onyel:#1b1a17;
+  --sans:"Noto Sans TC",-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#17161a; --paper:#211f24; --ink:#f2eee6; --muted:#b4ada1; --line:#f2eee6; --soft:#34313a;
+  --orange:#ff7a24; --blue:#7d93ff; --yellow:#ffd23f; --onacc:#17161a; --onyel:#17161a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#17161a; --paper:#211f24; --ink:#f2eee6; --muted:#b4ada1; --line:#f2eee6; --soft:#34313a;
+  --orange:#ff7a24; --blue:#7d93ff; --yellow:#ffd23f; --onacc:#17161a; --onyel:#17161a; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.75}
+.wrap{max-width:980px;margin:0 auto;padding-block:32px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:clamp(1.8rem,5vw,2.6rem);font-weight:900}
+h2{font-size:1.45rem;font-weight:900;display:flex;flex-wrap:wrap;gap:.2em .5em;align-items:baseline}
+h2 .k{white-space:nowrap;font-size:.8rem;font-weight:700;letter-spacing:.08em;color:var(--orange)}
+h3{font-size:1.08rem;font-weight:700}
+p{margin:0;max-width:68ch}
+section{display:flex;flex-direction:column;gap:16px;min-width:0}
+a{color:var(--blue)}
+.top{display:flex;gap:18px;flex-wrap:wrap;font-weight:700;font-size:.95rem;margin-bottom:-24px}
+.eyebrow{font-size:.85rem;font-weight:700;letter-spacing:.06em;color:var(--muted)}
+.hero{display:flex;flex-direction:column;gap:14px;border-bottom:3px solid var(--line);padding-bottom:28px}
+.lede{font-size:1.1rem;max-width:62ch}
+.links{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:.95rem}
+.goal{background:var(--yellow);color:var(--onyel);border:3px solid var(--line);box-shadow:6px 6px 0 var(--line);padding:20px 22px;display:flex;flex-direction:column;gap:10px}
+.goal p{font-size:1.08rem;font-weight:500}
+.goal ol{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px}
+.phases{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.ph{background:var(--paper);border:3px solid var(--line);box-shadow:5px 5px 0 var(--line);display:flex;flex-direction:column;min-width:0}
+.ph header{padding:12px 16px;color:var(--onacc);display:flex;flex-direction:column;gap:2px}
+.ph:nth-child(1) header{background:var(--orange)}
+.ph:nth-child(2) header{background:var(--blue)}
+.ph:nth-child(3) header{background:var(--ink);color:var(--bg)}
+.ph header .d{font-size:.85rem;font-weight:700;letter-spacing:.06em;font-variant-numeric:tabular-nums}
+.ph header h3{font-size:1.15rem}
+.ph .body{padding:14px 16px 18px;display:flex;flex-direction:column;gap:12px}
+.ph ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:6px}
+.ph .ms{border-top:2px dashed var(--soft);padding-top:10px;font-size:.95rem}
+.ph .ms b{display:block;font-size:.8rem;letter-spacing:.06em;color:var(--muted)}
+.tag{display:inline-block;font-size:.78rem;font-weight:700;border:1.5px solid currentColor;border-radius:3px;padding:0 5px;margin-right:4px;color:var(--muted);white-space:nowrap}
+.tw{overflow-x:auto;border:2px solid var(--line);background:var(--paper)}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:.95rem}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--soft)}
+th{background:var(--soft);font-weight:700;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+td.n{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:700}
+.note{font-size:.9rem;color:var(--muted)}
+.built{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.built div{border-left:4px solid var(--orange);padding:2px 0 2px 14px;display:flex;flex-direction:column;gap:4px}
+.built div:nth-child(2){border-left-color:var(--blue)}
+.risks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 24px}
+.risks div{display:flex;flex-direction:column;gap:4px;min-width:0}
+@media (max-width:760px){.phases,.built,.risks{grid-template-columns:minmax(0,1fr)}}
+@media (prefers-reduced-motion:reduce){</style>
+<style>body{margin:0}</style>
+</head>
+<body>
+
+<div class="wrap">
+<nav class="top"><a href="index.html">← 回里級地圖</a><a href="check.html">單棟初篩</a></nav>
+
+<header class="hero">
+  <div class="eyebrow">臺北市政 debug 松 #6｜危老耐震如何查、風險評級怎麼找</div>
+  <h1>危老檢查你我他：上任 100 天實施方案</h1>
+  <p class="lede">把已經上線的「里危老分數地圖」和「單棟初篩」交給市府使用，先在 5 個高分里試辦，100 天內換上市府自己的屋齡與結構資料，再決定第二批要去的里。</p>
+  <div class="links">
+    <a href="index.html">作品網站</a>
+    <a href="check.html">單棟初篩</a>
+    <a href="https://github.com/AinsleeWang/taipei-village-seismic-check" target="_blank" rel="noopener">GitHub 原始碼</a>
+  </div>
+</header>
+
+<section class="goal" aria-label="百日目標">
+  <p>第 100 天時，市府要能拿出這三樣東西：</p>
+  <ol>
+    <li>一份用市府稅籍與建管資料重算過、跨局處同意的全市 456 里危老排行，公開在臺北市資料大平臺。</li>
+    <li>5 個試辦里的實際成果：多少長輩做了單棟初篩、多少棟預約了耐震初評。</li>
+    <li>第二批 25 個里的名單，以及既有初評補助名額的分配順序。</li>
+  </ol>
+</section>
+
+<section>
+  <h2><span class="k">現在有的</span>已經做好、可以直接用的工具</h2>
+  <div class="built">
+    <div>
+      <h3>里危老分數地圖</h3>
+      <p>輸入地址就能查到這一里的分數。分數＝液化 40%＋65 歲以上比例 30%＋30 年以上老屋比例 30%，可疊液化潛勢、逐棟屋齡、高齡人口與 182 處搶救困難巷道，也能看 2035 年的熱區推估。</p>
+    </div>
+    <div>
+      <h3>單棟初篩</h3>
+      <p>民眾用手機量地板傾斜、拍裂縫讓系統辨識，回答屋齡與結構問題，得到 A 到 D 四級結果，並可列印報告帶去找技師或里辦公處。</p>
+    </div>
+  </div>
+  <p class="note">限制：老屋比例目前用實價登錄成交樣本推估，約涵蓋全市 28% 建物、偏新約 11 個百分點；逐棟結構與耐震初評結果尚未開放。這兩項是百日內第一件要補的事。</p>
+</section>
+
+<section>
+  <h2><span class="k">時程</span>三個階段</h2>
+  <div class="phases">
+    <article class="ph">
+      <header><span class="d">第 1–30 天</span><h3>市府內部開始用</h3></header>
+      <div class="body">
+        <ul>
+          <li>市長指示成立跨局處小組，由都發局主責，每兩週開會一次。<br><span class="tag">都發局</span></li>
+          <li>簽資料提供協議：稅捐處提供各里稅籍屋齡與構造別彙總，建管處提供建照年份、構造、樓層與耐震初評結果的里層級統計，全部去識別化。<br><span class="tag">稅捐處</span><span class="tag">建管處</span></li>
+          <li>用新資料重算老屋分數，小組開一次工作坊確認 40／30／30 權重。<br><span class="tag">都發局</span><span class="tag">社會局</span><span class="tag">消防局</span></li>
+          <li>網站移到市府網域，單棟初篩的判讀文字請技師公會審閱。<br><span class="tag">資訊局</span><span class="tag">建管處</span></li>
+        </ul>
+        <div class="ms"><b>里程碑</b>第 14 天小組成立；第 30 天資料協議簽妥、權重定案、內部版上線。</div>
+      </div>
+    </article>
+    <article class="ph">
+      <header><span class="d">第 31–60 天</span><h3>5 個里試辦</h3></header>
+      <div class="body">
+        <ul>
+          <li>從排行前 30 名挑 4 個里，再加 1 個 2035 新進熱區的里，與里長確認意願。<br><span class="tag">民政局</span><span class="tag">區公所</span></li>
+          <li>每里開一場說明會：現場有技師諮詢、志工陪長輩量傾斜與拍裂縫、當場預約耐震初評補助，都更處說明危老重建。<br><span class="tag">建管處</span><span class="tag">都更處</span><span class="tag">里辦公處</span></li>
+          <li>社區關懷據點與獨居長者訪視時，帶著紙本初篩和 QR code 傳單。<br><span class="tag">社會局</span></li>
+          <li>現勘試辦里內的搶救困難巷道，結果標回地圖。<br><span class="tag">消防局</span></li>
+          <li>初篩 C、D 級的住戶，由建管處在 14 天內聯繫。<br><span class="tag">建管處</span></li>
+        </ul>
+        <div class="ms"><b>里程碑</b>第 45 天第一場說明會；第 60 天 5 個里全部辦完。</div>
+      </div>
+    </article>
+    <article class="ph">
+      <header><span class="d">第 61–100 天</span><h3>公開與擴大</h3></header>
+      <div class="body">
+        <ul>
+          <li>檢討試辦數字，必要時調整權重與單棟初篩的判斷門檻。<br><span class="tag">都發局</span><span class="tag">研考會</span></li>
+          <li>全市排行、計算方法與里層級資料上架臺北市資料大平臺。<br><span class="tag">資訊局</span></li>
+          <li>決定第二批 25 個里。既有的耐震初評補助與健檢名額依排行先排給高分里，不另增補助預算。<br><span class="tag">建管處</span><span class="tag">主計處</span></li>
+          <li>KPI 納入研考會列管，每季更新一次分數。<br><span class="tag">研考會</span></li>
+        </ul>
+        <div class="ms"><b>里程碑</b>第 100 天公布全市排行、試辦成果與第二批名單。</div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<section>
+  <h2><span class="k">分工</span>各局處負責什麼</h2>
+  <div class="tw"><table>
+    <thead><tr><th>局處</th><th>百日內負責的事</th><th>要交出的東西</th></tr></thead>
+    <tbody>
+      <tr><td>都發局（主責）</td><td>召集跨局處小組、確認權重、決定試辦與第二批名單</td><td>權重定案紀錄、第二批 25 里名單</td></tr>
+      <tr><td>都發局建管處</td><td>提供建照年份、構造、樓層與耐震初評結果的里層級統計；說明會技師諮詢；C、D 級住戶後續聯繫</td><td>里層級資料檔、初評預約清單</td></tr>
+      <tr><td>都發局都更處</td><td>試辦里危老重建說明與諮詢</td><td>諮詢件數</td></tr>
+      <tr><td>財政局稅捐處</td><td>提供各里房屋稅籍屋齡與構造別彙總（不含個資）</td><td>里層級資料檔</td></tr>
+      <tr><td>民政局、區公所</td><td>聯繫里長、安排說明會場地與宣傳</td><td>5 場說明會</td></tr>
+      <tr><td>社會局</td><td>關懷據點、獨居長者訪視時協助長輩做單棟初篩</td><td>長輩完成初篩份數</td></tr>
+      <tr><td>消防局</td><td>現勘試辦里的搶救困難巷道</td><td>現勘紀錄</td></tr>
+      <tr><td>資訊局</td><td>網站移到市府網域、資料上架資料大平臺</td><td>正式網址、資料集頁面</td></tr>
+      <tr><td>研考會</td><td>KPI 列管與第 100 天成果檢核</td><td>列管報告</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2><span class="k">KPI</span>第 100 天怎麼算有做到</h2>
+  <div class="tw"><table>
+    <thead><tr><th>指標</th><th>目標</th><th>期限</th><th>怎麼量</th></tr></thead>
+    <tbody>
+      <tr><td>市府資料換上去</td><td class="n">2 項</td><td class="n">第 30 天</td><td>稅籍屋齡構造、建管構造與初評結果都完成里層級彙總並重算分數</td></tr>
+      <tr><td>試辦里說明會</td><td class="n">5 場</td><td class="n">第 60 天</td><td>每場簽到人數，目標每場 40 人以上</td></tr>
+      <tr><td>單棟初篩完成份數</td><td class="n">500 份</td><td class="n">第 90 天</td><td>網站完成數加紙本回收數，限試辦里</td></tr>
+      <tr><td>耐震初評預約</td><td class="n">100 件</td><td class="n">第 90 天</td><td>試辦里說明會與線上預約件數，和去年同期相比</td></tr>
+      <tr><td>C、D 級住戶後續聯繫</td><td class="n">100%</td><td class="n">每件 14 天內</td><td>建管處聯繫紀錄</td></tr>
+      <tr><td>搶救困難巷道現勘</td><td class="n">100%</td><td class="n">第 60 天</td><td>試辦里內列管巷道的現勘紀錄</td></tr>
+      <tr><td>資料公開</td><td class="n">1 份資料集</td><td class="n">第 100 天</td><td>臺北市資料大平臺上架，含計算方法說明</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">數字是建議目標。第 30 天取得各里初評件數基準後，由跨局處小組再確認一次。</p>
+</section>
+
+<section>
+  <h2><span class="k">經費</span>百日內用多少</h2>
+  <p>第一年粗估約 180 萬元，百日內約用掉一半。不另增耐震初評補助預算，排行的用途是決定既有補助與健檢資源先排給哪些里。</p>
+  <div class="tw"><table>
+    <thead><tr><th>項目</th><th>第一年</th><th>其中百日內</th><th>百日內用在哪裡</th></tr></thead>
+    <tbody>
+      <tr><td>系統開發</td><td class="n">84 萬</td><td class="n">45 萬</td><td>網站移到市府網域、介接稅捐處與建管處資料</td></tr>
+      <tr><td>資料整理</td><td class="n">40 萬</td><td class="n">25 萬</td><td>市府資料彙總到里、重算老屋分數</td></tr>
+      <tr><td>維運</td><td class="n">10 萬</td><td class="n">3 萬</td><td>主機與資料更新</td></tr>
+      <tr><td>說明會</td><td class="n">45 萬</td><td class="n">17 萬</td><td>5 個試辦里的場地、紙本初篩、技師現場諮詢</td></tr>
+      <tr><td><b>合計</b></td><td class="n">180 萬</td><td class="n">90 萬</td><td></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2><span class="k">風險</span>可能卡住的地方與因應</h2>
+  <div class="risks">
+    <div><h3>資料提供協議談不下來</h3><p>只要里層級彙總，不要逐棟資料，避開個資問題。若第 30 天前仍拿不到，先用實價登錄推估版試辦，並在畫面上標示。</p></div>
+    <div><h3>里長擔心排名被貼標籤</h3><p>對外用「優先服務的里」說法，排行公開時同時公開計算方法，強調是排資源先後，不是安全鑑定。</p></div>
+    <div><h3>長輩不會用手機初篩</h3><p>說明會與關懷據點都有志工陪同，另備紙本題目，結果可列印。</p></div>
+    <div><h3>初篩結果讓人過度安心或恐慌</h3><p>資料不足時顯示「還不能判斷」而不是 A 級；C、D 級一律由建管處聯繫，結果頁註明初篩不等於耐震評估。</p></div>
+  </div>
+</section>
+
+
+</div>
+
+</body>
+</html>

@@ -6,7 +6,7 @@
 
 - 作品網站：https://ainsleewang.github.io/taipei-village-seismic-check/
 - 單棟初篩：https://ainsleewang.github.io/taipei-village-seismic-check/check.html
-- 百日實施方案：https://claude.ai/artifact/BkZUAcHQQtgutCrc6LvFVV
+- 百日實施方案：https://ainsleewang.github.io/taipei-village-seismic-check/plan.html
 
 ## 功能
 
@@ -56,7 +56,7 @@
 
 ## 市府上任 100 天內要做什麼
 
-完整內容見[百日實施方案](https://claude.ai/artifact/BkZUAcHQQtgutCrc6LvFVV)。
+完整內容見[百日實施方案](https://ainsleewang.github.io/taipei-village-seismic-check/plan.html)。
 
 - **第 1–30 天：市府內部開始用。** 由都發局主責成立跨局處小組。稅捐處提供房屋稅籍屋齡與構造別、建管處提供建照與耐震初評結果，都彙總到里並去識別化，用來重算老屋分數。網站移到市府網域。
 - **第 31–60 天：5 個里試辦。** 從前 30 名挑 4 個里，加 1 個 2035 新進熱區的里，每里辦一場說明會：技師諮詢、志工陪長輩做單棟初篩、當場預約耐震初評。C、D 級住戶由建管處 14 天內聯繫。
