@@ -102,7 +102,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--yellow);outline
 details.layers>summary{cursor:pointer;list-style:none;border-bottom:0}
 details.layers>summary::-webkit-details-marker{display:none}
 details.layers[open]>summary{border-bottom:var(--bd)}
-.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-bottom:var(--bd);background:var(--paper)}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-bottom:var(--bd);background:var(--paper)}
 .stat{padding:8px 12px;min-width:0}
 .stat+.stat{border-left:var(--bd)}
 .stat .k{font-weight:900;font-size:.85rem}
@@ -115,7 +115,6 @@ details.layers[open]>summary{border-bottom:var(--bd)}
 .stat .v i{font-style:normal;font-size:1rem;color:var(--orange);align-self:center;margin-top:-1em}
 .stat .y{display:flex;gap:24px;font-size:.75rem;font-weight:700;color:var(--muted)}
 @media (max-width:640px){.stat .v{font-size:1.05rem;flex-wrap:wrap}.stat{padding:6px 8px}}
-.mapctl{top:150px}
 .twline{margin:0;font-weight:700}
 .twline b{background:var(--yellow);color:var(--ink);padding:0 6px;border:2px solid var(--ink)}
 .mapcol{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-content:start;min-width:0}
@@ -131,7 +130,7 @@ details.layers[open]>summary{border-bottom:var(--bd)}
 #db .row{cursor:pointer}
 #db .row:hover rect:last-of-type{fill:rgba(255,210,63,.35)}
 .dbnote{margin:0;padding:8px 12px;border-top:var(--bd);font-size:.875rem;color:var(--muted)}
-.modebadge{position:absolute;right:56px;top:150px;z-index:4;background:#d62e1f;color:#fff;border:var(--bd);box-shadow:3px 3px 0 var(--ink);font-weight:900;padding:4px 12px}
+.modebadge{position:absolute;right:56px;top:56px;z-index:4;background:#d62e1f;color:#fff;border:var(--bd);box-shadow:3px 3px 0 var(--ink);font-weight:900;padding:4px 12px}
 .maptip{position:absolute;z-index:6;pointer-events:none;background:#fff;color:var(--ink);border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:8px 10px;font-size:13px;line-height:1.5;max-width:260px}
 .yearnote{margin:0;padding:8px 12px;border-top:var(--bd);background:#e4e8fb;font-size:.875rem}
 .yrline{margin:0;font-size:.875rem;font-weight:700;color:#e3e8ff}
@@ -263,7 +262,6 @@ footer a,.src a{color:inherit;text-decoration:underline;text-underline-offset:2p
     <div class="mapcol">
     <section class="card mapcard">
       <div class="cap"><span>危老分數地圖</span><small id="wlabel">液化 40／高齡 30／老屋 30</small></div>
-      <div class="stats" id="stats" aria-live="polite"></div>
       <div class="mapctl">
         <div class="seg" role="group" aria-label="視角"><button id="v3" aria-pressed="true">3D</button><button id="v2" aria-pressed="false">2D</button></div>
         <div class="seg"><button id="home" aria-pressed="false">全市</button></div>
@@ -316,9 +314,9 @@ footer a,.src a{color:inherit;text-decoration:underline;text-underline-offset:2p
   </footer>
 </div>
 
-<script src="config.js?v=20261024b"></script>
+<script src="config.js?v=20261024g"></script>
 <script src="lib/deck.gl-9.1.14.min.js"></script>
 <script src="lib/maplibre-gl-4.7.1.js"></script>
-<script src="app.js?v=20261024e"></script>
+<script src="app.js?v=20261024g"></script>
 </body>
 </html>

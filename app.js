@@ -270,7 +270,6 @@ function render(v,addr,xy,warn){lastWarn=warn||'';
   const ck='check.html'+(xy?'?'+new URLSearchParams({...(lqv?{liq:lqv}:{}),addr:addr||''}).toString():'');
   $('res').innerHTML=`${warnBox}<div><p class="addr">${esc(addr||'在地圖上點選')}</p><h2 class="vname">${esc(v.d)} ${esc(v.n)}</h2></div>${lq}
   <p class="yrline">現在 ${v.s0} 分・第 ${v.r0} 名 → 2035 ${v.s1} 分・第 ${v.r1} 名${v.isNew?'　<b>2035 新進前 30 名</b>':''}</p>
-  <p class="twline">雙老熱區：${both(v.p0,v.h0)===2?'<b>現在就是</b>':both(v.p1,v.h1)===2?'現在不是，<b>2035 會變成熱區</b>':'現在和 2035 都不是'}</p>
   <div class="tiles"><div class="tile"><div class="k">危老分數（${YL()}）</div><div class="v">${v.s}<small>/ 100</small></div></div>
   <div class="tile"><div class="k">全市排名（${YL()}）</div><div class="v">${v.r}<small>/ ${N}</small></div></div></div>
   <div><span class="lvl">里的風險：${level(v.s)}</span>${v.s<30?'<span class="lvlnote">不代表你家這棟安全</span>':''}</div>
@@ -328,8 +327,8 @@ function setYear(y){yr=y;if(y===2&&!L.score.on){setOn('score',true);save();chips
   $('yearnote').hidden=!y;$('modebadge').hidden=y!==2;$('wlabel').textContent=yr===2?'顏色與柱高＝十年內分數增加多少':wl()}
 ['y0','y1','y2'].forEach((id,i)=>$(id).onclick=()=>setYear(i));
 // 全市大字：現在 → 2035
-function stats(){if(!V.length)return;const pop=a=>V.reduce((t,v)=>t+a(v),0);
-  const c=[['全市 65 歲以上',CITY[0].toFixed(1)+'%',CITY[1].toFixed(1)+'%'],['雙老熱區',V.filter(v=>both(v.p0,v.h0)===2).length+' 里',V.filter(v=>both(v.p1,v.h1)===2).length+' 里'],['危老分數 60 分以上',V.filter(v=>v.s0>=60).length+' 里',V.filter(v=>v.s1>=60).length+' 里']];
+function stats(){if(!V.length||!$('stats'))return;const pop=a=>V.reduce((t,v)=>t+a(v),0);
+  const c=[['全市 65 歲以上',CITY[0].toFixed(1)+'%',CITY[1].toFixed(1)+'%'],['雙老熱區',V.filter(v=>both(v.p0,v.h0)===2).length+' 里',V.filter(v=>both(v.p1,v.h1)===2).length+' 里']];
   $('stats').innerHTML=c.map(([k,a,b])=>`<div class="stat"><div class="k">${k}</div><div class="v"><span class="cell${yr?'':' on'}"><b>${a}</b><small>現在</small></span><i>→</i><span class="cell${yr?' on':''}"><b>${b}</b><small>2035 推估</small></span></div></div>`).join('')}
 const CITY=[24.9,33.3];
 // 現在 → 2035 啞鈴圖
