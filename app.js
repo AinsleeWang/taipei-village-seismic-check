@@ -269,7 +269,6 @@ function render(v,addr,xy,warn){lastWarn=warn||'';
   const warnBox=warn?`<div class="box warn"><h3>注意</h3><p>${esc(warn)}</p></div>`:'';
   const ck='check.html'+(xy?'?'+new URLSearchParams({...(lqv?{liq:lqv}:{}),addr:addr||''}).toString():'');
   $('res').innerHTML=`${warnBox}<div><p class="addr">${esc(addr||'在地圖上點選')}</p><h2 class="vname">${esc(v.d)} ${esc(v.n)}</h2></div>${lq}
-  <p class="yrline">現在 ${v.s0} 分・第 ${v.r0} 名 → 2035 ${v.s1} 分・第 ${v.r1} 名${v.isNew?'　<b>2035 新進前 30 名</b>':''}</p>
   <div class="tiles"><div class="tile"><div class="k">危老分數（${YL()}）</div><div class="v">${v.s}<small>/ 100</small></div></div>
   <div class="tile"><div class="k">全市排名（${YL()}）</div><div class="v">${v.r}<small>/ ${N}</small></div></div></div>
   <div><span class="lvl">里的風險：${level(v.s)}</span>${v.s<30?'<span class="lvlnote">不代表你家這棟安全</span>':''}</div>
