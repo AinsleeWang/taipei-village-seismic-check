@@ -49,7 +49,7 @@ header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-betw
 .opts{display:flex;flex-wrap:wrap;gap:8px}
 .opts button{font:inherit;font-weight:700;font-size:.92rem;border:var(--bd);background:var(--card);color:var(--ink);padding:6px 12px;cursor:pointer;box-shadow:3px 3px 0 var(--ink)}
 .opts button[aria-pressed="true"]{background:var(--blue);color:#fff}
-input[type=number],#manDeg{font:inherit;font-weight:700;font-size:1.05rem;border:var(--bd);background:var(--card);color:var(--ink);padding:8px 12px;width:9em}
+input[type=number],#manDeg,#year{font:inherit;font-weight:700;font-size:1.05rem;border:var(--bd);background:var(--card);color:var(--ink);padding:8px 12px;width:9em}
 button:focus-visible,input:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
 .btn{font:inherit;font-weight:900;font-size:1rem;letter-spacing:.06em;background:#141414;color:#fff;border:3px solid #141414;padding:10px 20px;cursor:pointer;box-shadow:4px 4px 0 var(--orange)}
 .btn.y{background:var(--yellow);color:#141414;box-shadow:4px 4px 0 #141414}
@@ -182,7 +182,7 @@ footer p{margin:0}
     <div class="in">
       <div class="q">
         <label for="year">建照或完工年份（民國或西元都可以）</label>
-        <div class="row"><input id="year" type="number" inputmode="numeric" min="1" max="2027" placeholder="例如 72 或 1983"><span class="sub" id="yearconv" aria-live="polite"></span><span class="sub">可看權狀、使用執照，或問管委會。知道建照年份更好：民國 88 年底改規範以前拿到建照的房子，可能到 90 年後才完工。</span></div>
+        <div class="row"><input id="year" type="text" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="例如 72 或 1983"><span class="sub" id="yearconv" aria-live="polite"></span><span class="sub">可看權狀、使用執照，或問管委會。知道建照年份更好：民國 88 年底改規範以前拿到建照的房子，可能到 90 年後才完工。</span></div>
       </div>
       <div class="q"><span class="lab">結構</span>
         <div class="opts" data-k="struct">
@@ -376,7 +376,7 @@ $$('.opts').forEach(g => g.querySelectorAll('button').forEach(b => {
 }));
 // 輸入 1912 以上當成西元，換算成民國
 const toROC = v => v > 1911 ? v - 1911 : v;
-$('#year').oninput = e => { const v = parseInt(e.target.value, 10); st.year = v > 0 && toROC(v) > 0 && toROC(v) <= 116 ? toROC(v) : null;
+$('#year').oninput = e => { const v = parseInt(e.target.value.replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/[^0-9]/g, ''), 10); st.year = v > 0 && toROC(v) > 0 && toROC(v) <= 116 ? toROC(v) : null;
   $('#yearconv').textContent = st.year ? (v > 1911 ? `＝民國 ${st.year} 年` : `＝西元 ${st.year + 1911} 年`) : (e.target.value ? '請輸入民國 1–116 年或西元 1912–2027 年' : ''); save(); };
 
 /* ---------- 02 傾斜 ---------- */
