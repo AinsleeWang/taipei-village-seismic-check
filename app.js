@@ -411,6 +411,8 @@ if(matchMedia('(max-width:1000px)').matches)$('layers').open=false;
 // 桌機：進階設定預設收起，左邊箭頭展開／收合，地圖跟著變寬
 function toggleSet(){const w=$('mapwrap'),open=w.classList.toggle('shut')===false;$('settab').setAttribute('aria-expanded',open);setTimeout(()=>window.dispatchEvent(new Event('resize')),30)}
 $('settab').onclick=toggleSet;
+// 現在→2035 變化（啞鈴圖）：預設藏起來，進階設定最下面的按鈕控制
+$('dbshow').onclick=()=>{const c=$('dbcard'),show=c.hidden;c.hidden=!show;$('dbshow').setAttribute('aria-pressed',show);$('dbshow').textContent=show?'收起現在到 2035 的變化':'檢視從現在到 2035 的變化';if(show){dumbbell();c.scrollIntoView({behavior:'smooth',block:'nearest'})}};
 // 桌機上點「進階設定」標題也能收起（手機維持原本的展開／收合）
 $('layers').querySelector('summary').addEventListener('click',e=>{if(!matchMedia('(max-width:1000px)').matches){e.preventDefault();toggleSet()}});
 // 單棟頁「回里級地圖」會帶 ?q=地址，門牌載入後自動查詢
