@@ -20,9 +20,9 @@ const PAL = {
   liq:   {blue:['#3f5ad8','#8a9cec','#d4dbf8'], orange:['#a53d05','#ef8d42','#fbd7b5'], ink:['#141414','#6b6b6b','#c9c9c9']},
   old:   {violet:['#f1e9fb','#c9b0ee','#9a72de','#6d3fc6','#3f1f86'], green:['#e6f5e1','#a9dd9c','#5fbf5a','#2f8f3a','#145a22'], orange:['#fbe7d2','#f6bc85','#ef8d42','#e8650a','#a53d05']},
   house: {ink:['#141414','#b9b2a6'], orange:['#e8650a','#c9c1b4'], blue:['#3f5ad8','#c9c1b4']},
-  fire:  {red:['#e5322d'], yellow:['#ffd23f'], blue:['#3f5ad8']}
+  fire:  {red:['#e5322d'], blue:['#3f5ad8'], ink:['#141414']}
 };
-const PALNAME={orange:'橘色',blue:'藍色',heat:'黃到黑',ink:'黑灰',violet:'紫色',green:'綠色',yellow:'黃色',red:'紅色'};
+const PALNAME={orange:'橘色',blue:'藍色',heat:'黃到黑',ink:'黑色',violet:'紫色',green:'綠色',yellow:'黃色',red:'紅色'};
 const LAYERS = [
   {k:'score', name:'危老分數（3D 柱）', tag:'A 版分數', on:true, op:.92, pal:'orange', desc:'每個里依分數升高，顏色越深分數越高。'},
   {k:'liq', name:'土壤液化潛勢', tag:'真實', on:false, op:.55, pal:'blue', desc:'高／中／低潛勢範圍。'},
@@ -30,12 +30,22 @@ const LAYERS = [
   {k:'old', name:'高齡人口比例', tag:'真實', on:false, op:.75, pal:'violet', desc:'65 歲以上人口比例，以里為單位。'},
   {k:'fire', name:'火災搶救困難、長巷道', tag:'真實', on:false, op:.9, pal:'red', desc:'消防局列管的 185 處巷道。清冊只有路名，我們用門牌資料把每條巷道的門牌畫成點，大圓點是巷道位置。'}
 ];
+// 各圖層資料來源（頁尾與面板共用）
+const DT=id=>'https://data.taipei/dataset/detail?id='+id;
+const SRC={
+  liq:[['臺北市土壤液化潛勢圖（工務局，2016–2018 調查）',DT('ec40e067-930f-4058-b7dc-71399d5f3147')]],
+  old:[['臺北市各里人口數按年齡分（民政局，115 年 9 月）',DT('a6394e3f-3514-4542-87bd-de4310a40db3')]],
+  house:[['不動產實價登錄（內政部，2011–2026 成交）','https://plvr.land.moi.gov.tw/DownloadOpenData'],['座標整理版 taiwan-lvr-geodata（第三方）','https://github.com/monkey1wizard/taiwan-lvr-geodata'],['核對用：臺北市歷年使用執照摘要（建管處）',DT('c876ff02-af2e-4eb8-bd33-d444f5052733')]],
+  fire:[['臺北市消防通道清冊（消防局）',DT('7a800e92-eb22-461f-b29d-8def2127a1bc')],['定位用：內政部門牌位置資料（taiwan-address-data 整理版）','https://github.com/monkey1wizard/taiwan-address-data']]
+};
+SRC.score=[...SRC.liq,...SRC.old,SRC.house[0]];
+const srcHtml=k=>SRC[k].map(([t,u])=>`<a href="${u}" target="_blank" rel="noopener">${t}</a>`).join('、');
 const PRESETS = [
   {id:'bal',label:'均衡',w:{liq:40,old:30,house:30}},
   {id:'dis',label:'防災優先',w:{liq:50,old:20,house:30}},
   {id:'eld',label:'照顧高齡',w:{liq:30,old:50,house:20}}
 ];
-const st = store.get('layers2', {});
+const st = store.get('layers3', {});
 const AREA=['score','liq','old']; // 面狀圖層一次只開一層，才不會疊成一片灰
 const L = Object.fromEntries(LAYERS.map(l=>[l.k,{...l,...(st[l.k]||{})}]));
 let preset = store.get('preset','bal');
@@ -106,10 +116,10 @@ function tooltip({object,layer}){
   if(!object||!layer)return null;
   let h='';
   if(['score','old','fire'].includes(layer.id)){const v=object;
-    h=`<b style="font-weight:900;font-size:15px">${esc(v.d)} ${esc(v.n)}</b><br>分數 <b>${v.s}</b>・第 ${v.r} 名／${N}<br>65 歲以上 ${pct(v.p0)}・老屋 ${pct(v.h0)}`+(v.fire.length?`<br>救災列管 ${v.fire.length} 處`:'')}
-  else if(layer.id==='firec'||layer.id==='firepts'){const f=layer.id==='firec'?object:object.f;h=`<b style="font-weight:900;font-size:15px">${esc(f.n)}</b><br>${esc(f.t)}${f.p?'・'+esc(f.p):''}<br>${esc(f.d)} ${esc(f.v)}${f.e?'':'<br>（找不到門牌，標在里的中心）'}`}
-  else if(layer.id==='liq'){h=`<b style="font-weight:900">液化潛勢：${['高','中','低'][object.c-1]}</b>`}
-  else if(layer.id==='house'){const o=object;h=`<b style="font-weight:900">屋齡 ${o.age} 年</b>${o.fl?`・${o.fl} 層`:''}<br>${esc(MAT[o.m]||'')}`}
+    h=`<small style="font-weight:700">${layer.id==='old'?'高齡人口':layer.id==='fire'?'救災巷道所在的里':'危老分數'}</small><br><b style="font-weight:900;font-size:15px">${esc(v.d)} ${esc(v.n)}</b><br>分數 <b>${v.s}</b>・第 ${v.r} 名／${N}<br>65 歲以上 ${pct(v.p0)}・老屋 ${pct(v.h0)}`+(v.fire.length?`<br>救災列管 ${v.fire.length} 處`:'')}
+  else if(layer.id==='firec'||layer.id==='firepts'){const f=layer.id==='firec'?object:object.f;h=`<small style="font-weight:700">救災巷道（消防局列管）${layer.id==='firepts'?'・這條巷子的門牌':''}</small><br><b style="font-weight:900;font-size:15px">${esc(f.n)}</b><br>${esc(f.t)}${f.p?'・'+esc(f.p):''}<br>${esc(f.d)} ${esc(f.v)}${f.e?'':'<br>（找不到門牌，標在里的中心）'}`}
+  else if(layer.id==='liq'){h=`<small style="font-weight:700">土壤液化潛勢</small><br><b style="font-weight:900">液化潛勢：${['高','中','低'][object.c-1]}</b>`}
+  else if(layer.id==='house'){const o=object;h=`<small style="font-weight:700">屋齡（實價登錄成交樣本）・一棟建物</small><br><b style="font-weight:900">屋齡 ${o.age} 年</b>${o.fl?`・${o.fl} 層`:''}<br>${esc(MAT[o.m]||'')}`}
   else return null;
   return {html:h,style:TT_STYLE};
 }
@@ -202,7 +212,7 @@ const liqAt=(x,y)=>{let c=0;for(const d of LIQ){if(inPoly(x,y,d.poly)&&(!c||d.c<
 function near(x,y,m){if(!HOUSES)return null;const kx=Math.cos(y*Math.PI/180)*111320,ky=110540;let n=0,o=0,brick=0,max=0;
   for(const h of HOUSES){const dx=(h.x-x)*kx,dy=(h.y-y)*ky;if(dx*dx+dy*dy<=m*m){n++;if(h.age>=30)o++;if(/磚/.test(MAT[h.m]||''))brick++;if(h.age>max)max=h.age}}
   return{n,o,brick,max}}
-function selectV(v,xy,addr,warn){sel=v;pin=xy;render(v,addr,xy,warn);refresh();
+function selectV(v,xy,addr,warn){sel=v;pin=xy;render(v,addr,xy,warn);refresh();legend();
   if(addr&&matchMedia('(max-width:1000px)').matches)document.querySelector('.result').scrollIntoView({behavior:'smooth',block:'start'});
   const c=xy||[(v.b[0]+v.b[2])/2,(v.b[1]+v.b[3])/2];if(engine)engine.fly(c[0],c[1],xy?14.3:13.4)}
 let lastWarn='';
@@ -231,15 +241,16 @@ function render(v,addr,xy,warn){lastWarn=warn||'';
 
 // ---------- legend & layer panel ----------
 function legend(){const g=[];
+  if(sel||pin)g.push(`<span class="g"><span class="sw" style="background:#ffd23f"></span>你查的里 <span class="sw" style="background:#e8650a;border-radius:50%"></span>你查的地址</span>`);
   if(L.score.on)g.push(`<span class="g">分數 0<span class="ramp">${PAL.score[L.score.pal].map(c=>`<i style="background:${c}"></i>`).join('')}</span>100</span>`);
   if(L.liq.on)g.push(`<span class="g">液化 ${['高','中','低'].map((n,i)=>`<span class="sw" style="background:${PAL.liq[L.liq.pal][i]}"></span>${n}`).join(' ')}</span>`);
   if(L.house.on&&zoomNow<13.5)g.push('<span class="g">屋齡點：拉近地圖才會顯示</span>');
-  else if(L.house.on)g.push(`<span class="g"><span class="sw" style="background:${PAL.house[L.house.pal][0]};border-radius:50%"></span>30 年以上（成交樣本）${houseOldOnly?'':` <span class="sw" style="background:${PAL.house[L.house.pal][1]};border-radius:50%"></span>未滿 30 年`}</span>`);
+  else if(L.house.on)g.push(`<span class="g"><span class="sw" style="background:${PAL.house[L.house.pal][0]};border-radius:50%"></span>一棟 30 年以上建物（成交樣本）${houseOldOnly?'':` <span class="sw" style="background:${PAL.house[L.house.pal][1]};border-radius:50%"></span>一棟未滿 30 年建物`}</span>`);
   if(L.old.on)g.push(`<span class="g">高齡 15%<span class="ramp">${PAL.old[L.old.pal].map(c=>`<i style="background:${c}"></i>`).join('')}</span>40%</span>`);
-  if(L.fire.on)g.push(`<span class="g"><span class="sw" style="background:${PAL.fire[L.fire.pal][0]};border-radius:50%;width:18px;height:18px;border-width:3px"></span>列管巷道 <span class="sw" style="background:${PAL.fire[L.fire.pal][0]};border-radius:50%;width:9px;height:9px;border-width:1px"></span>巷道門牌</span>`);
+  if(L.fire.on)g.push(`<span class="g"><span class="sw" style="background:${PAL.fire[L.fire.pal][0]};border-radius:50%;width:18px;height:18px;border-width:3px"></span>救災巷道位置 <span class="sw" style="background:${PAL.fire[L.fire.pal][0]};border-radius:50%;width:9px;height:9px;border-width:1px"></span>這條巷子的門牌${zoomNow<14.5?'（拉近才出現）':''}</span>`);
   $('legend').innerHTML=g.join('')||'<span>沒有開啟的疊圖</span>'}
 function setOn(k,v){L[k].on=v;if(v&&AREA.includes(k))AREA.forEach(a=>{if(a!==k)L[a].on=false})}
-function save(){store.set('layers2',Object.fromEntries(LAYERS.map(l=>[l.k,{on:L[l.k].on,op:L[l.k].op,pal:L[l.k].pal}])))}
+function save(){store.set('layers3',Object.fromEntries(LAYERS.map(l=>[l.k,{on:L[l.k].on,op:L[l.k].op,pal:L[l.k].pal}])))}
 const SHORT={score:'危老分數',liq:'液化潛勢',house:'屋齡（成交樣本）',old:'高齡人口',fire:'救災巷道'};
 function chips(){const btn=k=>{const c=PAL[k][L[k].pal];return `<button class="chipb" data-k="${k}" aria-pressed="${L[k].on}"><i style="background:${c[Math.floor(c.length/2)]}"></i>${SHORT[k]}</button>`};
   $('chips').innerHTML='<span class="lbl">底色（選一）</span>'+AREA.map(btn).join('')+'<span class="lbl" style="margin-left:10px">加上點位</span>'+['house','fire'].map(btn).join('')}
@@ -250,6 +261,7 @@ function panel(){
   $('laylist').innerHTML=LAYERS.map(({k})=>{const l=L[k];return `<div class="lay" data-k="${k}" ${l.on?'':'data-off'}>
     <div class="lh"><label><input type="checkbox" id="on-${k}" ${l.on?'checked':''}>${l.name}</label><span class="tag ${l.tag==='真實'?'real':''}">${l.tag}</span></div>
     <p class="sub">${l.desc}</p>
+    <p class="sub src">來源：${srcHtml(k)}${k==='score'?'（分數＝液化 40＋高齡 30＋老屋 30）':''}</p>
     <div class="lb"><label for="op-${k}">透明度</label><input type="range" id="op-${k}" min="0.1" max="1" step="0.05" value="${l.op}">
     ${k==='score'?`<label for="colh">柱高</label><input type="range" id="colh" min="0.3" max="3" step="0.1" value="${colH}">`:''}
     <span>配色</span><div class="pals">${Object.entries(PAL[k]).map(([pk,arr])=>`<button class="pal" data-pal="${pk}" aria-label="${PALNAME[pk]||pk}配色" aria-pressed="${pk===l.pal}">${arr.map(c=>`<i style="background:${c}"></i>`).join('')}</button>`).join('')}</div></div>
