@@ -413,8 +413,8 @@ function toggleSet(){const w=$('mapwrap'),open=w.classList.toggle('shut')===fals
 $('settab').onclick=toggleSet;
 // 現在→2035 變化（啞鈴圖）：預設藏起來，進階設定最下面的按鈕控制
 $('dbshow').onclick=()=>{const c=$('dbcard'),show=c.hidden;c.hidden=!show;$('dbshow').setAttribute('aria-pressed',show);$('dbshow').textContent=show?'收起現在到 2035 的變化':'檢視從現在到 2035 的變化';if(show){dumbbell();c.scrollIntoView({behavior:'smooth',block:'nearest'})}};
-// 桌機上點「進階設定」標題也能收起（手機維持原本的展開／收合）
-$('layers').querySelector('summary').addEventListener('click',e=>{if(!matchMedia('(max-width:1000px)').matches){e.preventDefault();toggleSet()}});
+// 桌機只用左邊箭頭開關，標題不能點（手機維持原本的展開／收合）
+$('layers').querySelector('summary').addEventListener('click',e=>{if(!matchMedia('(max-width:1000px)').matches)e.preventDefault()});
 // 單棟頁「回里級地圖」會帶 ?q=地址，門牌載入後自動查詢
 if(qs.get('q')){q.value=qs.get('q');$('clear').hidden=false}
 const enginePromise=(CFG.googleMapsApiKey?startGoogle().catch(err=>{console.warn(err);return startFree()}):startFree()).catch(err=>{console.error(err);$('engine').textContent='地圖載入失敗'});
