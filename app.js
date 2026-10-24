@@ -244,7 +244,6 @@ function selectV(v,xy,addr,warn){sel=v;pin=xy;render(v,addr,xy,warn);refresh();l
   const c=xy||[(v.b[0]+v.b[2])/2,(v.b[1]+v.b[3])/2];if(engine)engine.fly(c[0],c[1],xy?14.3:13.4)}
 let lastWarn='';
 function render(v,addr,xy,warn){lastWarn=warn||'';
-  $('coord').textContent=xy?xy[1].toFixed(5)+', '+xy[0].toFixed(5):'—';
   const w=weights();
   const parts=[['液化面積',v.pt[0],w.liq,'高潛勢 '+pct(v.hi)+'・中潛勢 '+pct(v.mid)],['高齡人口',v.pt[1],w.old,'65 歲以上 '+pct(v.pa)+(yr?'（2035 推估）':'')],['老屋比例',v.pt[2],w.house,(yr?'2035 年時 30 年以上 ':'30 年以上 ')+pct(v.ha)+'・實價登錄推估，實際可能更高'+(v.hd?'（這一里成交樣本少，用區平均）':`（成交樣本 ${v.hn} 棟）`)]];
   const t=w.liq+w.old+w.house;
@@ -257,7 +256,7 @@ function render(v,addr,xy,warn){lastWarn=warn||'';
   const warnBox=warn?`<div class="box warn"><h3>注意</h3><p>${esc(warn)}</p></div>`:'';
   const ck='check.html'+(xy?'?'+new URLSearchParams({...(lqv?{liq:lqv}:{}),addr:addr||''}).toString():'');
   $('res').innerHTML=`${warnBox}<div><p class="addr">${esc(addr||'在地圖上點選')}</p><h2 class="vname">${esc(v.d)} ${esc(v.n)}</h2></div>${lq}
-  <p class="yrline">${yr?'2035 推估':'現在'}｜現在 ${v.s0} 分・第 ${v.r0} 名 → 2035 ${v.s1} 分・第 ${v.r1} 名${v.isNew?'　<b>2035 新進前 30 名</b>':''}</p>
+  <p class="yrline">現在 ${v.s0} 分・第 ${v.r0} 名 → 2035 ${v.s1} 分・第 ${v.r1} 名${v.isNew?'　<b>2035 新進前 30 名</b>':''}</p>
   <p class="twline">雙老熱區：${both(v.p0,v.h0)===2?'<b>現在就是</b>':both(v.p1,v.h1)===2?'現在不是，<b>2035 會變成熱區</b>':'現在和 2035 都不是'}</p>
   <div class="tiles"><div class="tile"><div class="k">危老分數（${YL()}）</div><div class="v">${v.s}<small>/ 100</small></div></div>
   <div class="tile"><div class="k">全市排名（${YL()}）</div><div class="v">${v.r}<small>/ ${N}</small></div></div></div>
