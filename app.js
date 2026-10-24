@@ -330,7 +330,7 @@ function setYear(y){yr=y;if(y===2&&!L.score.on){setOn('score',true);save();chips
 // 全市大字：現在 → 2035
 function stats(){if(!V.length)return;const pop=a=>V.reduce((t,v)=>t+a(v),0);
   const c=[['全市 65 歲以上',CITY[0].toFixed(1)+'%',CITY[1].toFixed(1)+'%'],['雙老熱區',V.filter(v=>both(v.p0,v.h0)===2).length+' 里',V.filter(v=>both(v.p1,v.h1)===2).length+' 里'],['危老分數 60 分以上',V.filter(v=>v.s0>=60).length+' 里',V.filter(v=>v.s1>=60).length+' 里']];
-  $('stats').innerHTML=c.map(([k,a,b])=>`<div class="stat"><div class="k">${k}</div><div class="v"><span class="${yr?'':'on'}">${a}</span><i>→</i><span class="${yr?'on':''}">${b}</span></div><div class="y"><span>現在</span><span>2035 推估</span></div></div>`).join('')}
+  $('stats').innerHTML=c.map(([k,a,b])=>`<div class="stat"><div class="k">${k}</div><div class="v"><span class="cell${yr?'':' on'}"><b>${a}</b><small>現在</small></span><i>→</i><span class="cell${yr?' on':''}"><b>${b}</b><small>2035 推估</small></span></div></div>`).join('')}
 const CITY=[24.9,33.3];
 // 現在 → 2035 啞鈴圖
 function dumbbell(){if(!V.length)return;const list=[...V].sort(DB==='top'?(a,b)=>a.r1-b.r1:(a,b)=>b.ds-a.ds||a.r1-b.r1).slice(0,20);
