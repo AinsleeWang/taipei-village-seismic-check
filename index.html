@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>危老檢查你我他</title>
+<meta name="description" content="輸入臺北市地址，查你家這一里的危老風險分數，並在 3D 地圖上疊液化潛勢、老屋、高齡人口與救災困難巷道。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&family=Archivo+Black&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="lib/maplibre-gl-4.7.1.css">
+<style>
+/* Layout: 橘色帶放查詢框；下面左邊大地圖（可 3D）、右邊藍色結果卡＋疊圖面板；手機上下堆疊。 */
+:root{
+  color-scheme:light;
+  --paper:#fbf5ea; --card:#ffffff; --ink:#141414; --muted:#5a544c;
+  --orange:#e8650a; --blue:#3f5ad8; --blue-2:#5671ec; --blue-3:#2b3fa6; --yellow:#ffd23f;
+  --bd:3px solid var(--ink); --shadow:5px 5px 0 var(--ink);
+  --font:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --latin:"Archivo Black","Arial Black",Impact,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--font);font-weight:500;font-size:15px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 40px}
+.wrap{max-width:1360px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+.wrap>*{min-width:0}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 20px}
+.brand{font-weight:900;font-size:1.6rem;letter-spacing:.04em;margin:0}
+.chip{font-family:var(--mono);font-size:.72rem;font-weight:700;border:2px solid var(--ink);padding:2px 10px;background:var(--yellow);white-space:nowrap}
+.chip.w{background:var(--card)}
+
+.hero{background:var(--orange);border:var(--bd);box-shadow:var(--shadow);position:relative;z-index:5;min-width:0}
+.ticker{max-width:100%}
+.ticker{border-bottom:var(--bd);overflow:hidden;white-space:nowrap;color:#fff;font-family:var(--latin);font-size:.9rem;letter-spacing:.04em;padding:6px 0}
+.ticker span{display:inline-block;padding-right:28px;animation:tk 30s linear infinite}
+@keyframes tk{to{transform:translateX(-100%)}}
+@media (prefers-reduced-motion:reduce){.ticker span{animation:none}}
+.hero-in{padding:18px clamp(16px,3vw,36px) 22px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:14px 30px;align-items:center}
+@media (max-width:900px){.hero-in{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:480px){.go{flex:1 1 100%}.field{flex-basis:100%}}
+.hero h1{font-weight:900;font-size:clamp(1.7rem,3.6vw,2.7rem);line-height:1.12;margin:0;letter-spacing:.02em;text-wrap:balance}
+.search{position:relative;min-width:0}
+.bar{display:flex;gap:10px;flex-wrap:wrap}
+.field{flex:1 1 260px;min-width:0;display:flex;align-items:center;background:var(--card);border:var(--bd);border-radius:999px;box-shadow:4px 4px 0 var(--ink);padding:0 6px 0 16px}
+.field svg{flex:none}
+#q{flex:1;min-width:0;border:0;background:transparent;font:inherit;font-weight:700;font-size:1.08rem;padding:13px 10px;color:var(--ink);outline:none}
+#q::placeholder{color:#8c857c}
+.field:focus-within{outline:3px solid var(--yellow);outline-offset:3px}
+#clear{border:0;background:none;font:inherit;font-size:1.3rem;cursor:pointer;padding:4px 8px;color:var(--muted)}
+.go{background:var(--ink);color:#fff;border:3px solid var(--ink);border-radius:999px;font:inherit;font-weight:900;font-size:1.1rem;letter-spacing:.2em;padding:9px 28px;cursor:pointer;box-shadow:4px 4px 0 #fff}
+.go:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 #fff}
+.go:active{transform:translate(3px,3px);box-shadow:1px 1px 0 #fff}
+button:focus-visible,input:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+.hint{margin:8px 4px 0;font-size:.85rem;font-weight:700}
+#list{position:absolute;left:0;right:0;top:calc(100% + 10px);z-index:50;margin:0;padding:0;list-style:none;background:var(--card);border:var(--bd);box-shadow:var(--shadow);max-height:360px;overflow:auto}
+#list li{display:flex;gap:12px;align-items:center;padding:10px 14px;cursor:pointer;border-bottom:2px solid var(--ink)}
+#list li:last-child{border-bottom:0}
+#list li[aria-selected="true"]{background:var(--yellow)}
+#list .pin{flex:none;width:24px;height:24px;display:grid;place-items:center;background:var(--orange);border:2px solid var(--ink);border-radius:50% 50% 50% 0;transform:rotate(-45deg)}
+#list .pin.st{background:var(--blue);border-radius:3px;transform:none}
+#list .pin i{width:7px;height:7px;background:var(--ink);border-radius:50%}
+#list .pin.st i{background:var(--yellow)}
+#list b{font-weight:900}
+#list mark{background:var(--blue);color:var(--yellow);padding:0 2px}
+#list small{display:block;color:var(--muted);font-weight:500;font-size:.875rem}
+#list .empty{cursor:default;color:var(--muted);font-weight:700}
+
+.main{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:18px;align-items:start}
+@media (max-width:1000px){.main{grid-template-columns:1fr}}
+.card{background:var(--card);border:var(--bd);box-shadow:var(--shadow)}
+.cap{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;padding:8px 12px;border-bottom:var(--bd);font-weight:900}
+.cap small{font-family:var(--mono);font-weight:500;font-size:.875rem;color:var(--muted)}
+.mapcard{position:relative}
+#map{position:relative;height:min(72vh,720px);min-height:420px;background:#f3ead8}
+#map.gm{background:#f3ead8}
+.mapctl{position:absolute;left:12px;top:56px;z-index:4;display:flex;flex-direction:column;gap:8px}
+.seg{display:inline-flex;border:var(--bd);box-shadow:3px 3px 0 var(--ink);background:var(--card)}
+.seg button{font:inherit;font-weight:900;font-size:.85rem;border:0;background:transparent;padding:5px 12px;cursor:pointer}
+.seg button+button{border-left:var(--bd)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--yellow)}
+.loading{position:absolute;inset:auto 12px 12px auto;z-index:4;background:var(--yellow);border:2px solid var(--ink);font-weight:900;font-size:.8rem;padding:3px 10px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;padding:8px 12px;border-top:var(--bd);font-size:.875rem;font-weight:700;min-height:42px}
+.legend .ramp{display:inline-flex;border:2px solid var(--ink);vertical-align:middle;margin:0 4px}
+.legend .ramp i{width:22px;height:12px;display:block}
+.legend .sw{display:inline-block;width:14px;height:14px;border:2px solid var(--ink);vertical-align:-2px;margin-right:4px}
+.legend .g{display:inline-flex;align-items:center;gap:2px}
+
+.side{display:grid;gap:18px;min-width:0}
+.result{background:var(--blue);color:#fff}
+.result .cap{background:var(--ink);color:var(--yellow)}
+.result .cap small{color:#cfd6ff}
+.res-in{padding:16px;display:grid;gap:14px}
+.addr{font-weight:700;font-size:.9rem;color:#e3e8ff;margin:0;word-break:break-all}
+.vname{font-weight:900;font-size:1.9rem;line-height:1.15;margin:0}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{background:var(--blue-2);border:var(--bd);box-shadow:3px 3px 0 var(--ink);padding:8px 12px}
+.tile .k{font-size:.875rem;font-weight:700;color:#e3e8ff}
+.tile .v{font-family:var(--latin);font-size:2.3rem;line-height:1.05;color:var(--yellow);font-variant-numeric:tabular-nums}
+.tile .v small{font-family:var(--font);font-size:.85rem;font-weight:900;margin-left:4px;color:#fff}
+.lvl{display:inline-block;font-weight:900;padding:1px 12px;border:2px solid var(--ink);background:var(--yellow);color:var(--ink)}
+.parts{display:grid;gap:8px}
+.prow{display:grid;grid-template-columns:4.6em 1fr 3.4em;gap:8px;align-items:center;font-size:.85rem;font-weight:700}
+.track{height:18px;background:var(--blue-3);border:2px solid var(--ink);position:relative}
+.bfill{position:absolute;inset:0 auto 0 0;background:var(--yellow);border-right:2px solid var(--ink);transition:width .4s}
+.bfill.z{border-right:0}
+.prow .n{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums;font-size:.8rem}
+.raw{font-size:.875rem;color:#dfe5ff;margin:0 0 0 calc(4.6em + 8px)}
+.box{background:var(--blue-3);border:2px solid var(--ink);padding:8px 10px;font-size:.9rem}
+.box.warn{background:var(--yellow);color:var(--ink)}
+.box.warn h3{color:var(--ink)}
+.liqline{font-weight:900;font-size:1rem;margin:0}
+.liqline b{background:var(--yellow);color:var(--ink);padding:0 6px;border:2px solid var(--ink)}
+.lvlnote{font-size:.875rem;font-weight:700;margin-left:8px;color:#e3e8ff}
+.box h3{margin:0 0 4px;font-size:.88rem;font-weight:900;color:var(--yellow)}
+.box ul{margin:0;padding-left:1.1em}
+.box p{margin:0}
+.checklink{display:block;text-align:center;background:var(--yellow);color:var(--ink);border:var(--bd);box-shadow:3px 3px 0 var(--ink);font-weight:900;padding:8px 12px;text-decoration:none}
+.checklink:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink)}
+.note{font-size:.875rem;color:#dfe5ff;border-top:2px dashed #8fa0f0;padding-top:8px;margin:0}
+.empty-res{font-weight:700;color:#e3e8ff}
+
+.layers .lay{display:grid;gap:6px;padding:10px 12px;border-bottom:2px solid var(--ink)}
+.layers .lay:last-child{border-bottom:0}
+.lh{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.lh label{display:flex;align-items:center;gap:8px;font-weight:900;cursor:pointer}
+.lh input[type=checkbox]{appearance:none;width:22px;height:22px;border:var(--bd);background:var(--card);display:grid;place-items:center;margin:0;cursor:pointer}
+.lh input[type=checkbox]:checked{background:var(--orange)}
+.lh input[type=checkbox]:checked::after{content:"";width:6px;height:11px;border:solid var(--ink);border-width:0 3px 3px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.tag{font-family:var(--mono);font-size:.8rem;font-weight:700;border:2px solid var(--ink);padding:0 6px}
+.tag.real{background:var(--yellow)}
+.lb{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:center;font-size:.875rem;font-weight:700;color:var(--muted)}
+.lb input[type=range]{width:100%;accent-color:var(--orange)}
+.pals{display:flex;gap:6px;flex-wrap:wrap}
+.pal{border:2px solid var(--ink);padding:0;cursor:pointer;display:flex;background:none}
+.pal i{display:block;width:12px;height:16px}
+.pal[aria-pressed="true"]{outline:3px solid var(--ink);outline-offset:1px}
+.lay[data-off] .lb{opacity:.45}
+.sub{font-size:.875rem;color:var(--muted);margin:0}
+.wts{padding:10px 12px;display:grid;gap:8px;border-bottom:var(--bd)}
+.wts .seg{box-shadow:none;border-width:2px;flex-wrap:wrap}
+.wts .seg button{font-size:.8rem;padding:3px 10px}
+.wts .seg button+button{border-left:2px solid var(--ink)}
+.chk{display:flex;align-items:center;gap:6px;font-size:.875rem;font-weight:700;color:var(--muted);cursor:pointer}
+
+footer{font-size:.875rem;color:var(--muted);display:grid;gap:4px}
+footer p{margin:0;max-width:110ch}
+/* deck tooltip */
+.deck-tooltip{font-family:var(--font)!important}
+.maplibregl-ctrl-attrib{font-size:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="brand">危老檢查你我他</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="chip" id="engine">底圖載入中</span><span class="chip w">臺北市 456 里</span></div>
+  </header>
+
+  <section class="hero">
+    <div class="ticker" aria-hidden="true"><span>CHECK YOUR BLOCK → 輸入地址 → 找到你家的里 → 看危老風險 → 疊上液化、老屋、高齡、救災巷道 →</span><span>CHECK YOUR BLOCK → 輸入地址 → 找到你家的里 → 看危老風險 → 疊上液化、老屋、高齡、救災巷道 →</span></div>
+    <div class="hero-in">
+      <h1>你家這一里，<br>危老風險有多高？</h1>
+      <div>
+        <form class="search" id="f" autocomplete="off" role="search">
+          <div class="bar">
+            <div class="field">
+              <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="none" stroke="#141414" stroke-width="3"/><path d="M15.5 15.5 22 22" stroke="#141414" stroke-width="3" stroke-linecap="round"/></svg>
+              <input id="q" type="text" role="combobox" aria-expanded="false" aria-controls="list" aria-autocomplete="list" aria-label="輸入臺北市地址" placeholder="例如：廣州街211號、忠孝東路四段">
+              <button type="button" id="clear" aria-label="清除" hidden>×</button>
+            </div>
+            <button class="go" type="submit">查詢</button>
+          </div>
+          <ul id="list" role="listbox" hidden></ul>
+        </form>
+        <p class="hint" id="hint">門牌資料載入中…</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="main">
+    <section class="card mapcard">
+      <div class="cap"><span>危老分數地圖</span><small id="wlabel">液化 40／高齡 30／老屋 30</small></div>
+      <div class="mapctl">
+        <div class="seg" role="group" aria-label="視角"><button id="v3" aria-pressed="true">3D</button><button id="v2" aria-pressed="false">2D</button></div>
+        <div class="seg"><button id="home" aria-pressed="false">全市</button></div>
+      </div>
+      <div id="map"></div>
+      <div class="loading" id="loading">資料載入中</div>
+      <div class="legend" id="legend"></div>
+    </section>
+
+    <div class="side">
+      <section class="card result" aria-live="polite">
+        <div class="cap">查詢結果 <small id="coord">—</small></div>
+        <div class="res-in" id="res"><p class="empty-res">輸入地址，或在地圖上點一個里。</p></div>
+      </section>
+
+      <section class="card layers" id="layers">
+        <div class="cap">疊圖 <small>可開關、調透明度和配色</small></div>
+        <div class="wts">
+          <div style="font-weight:900;font-size:.88rem">分數怎麼算</div>
+          <div class="seg" id="presets"></div>
+          <p class="sub" id="wdesc"></p>
+        </div>
+        <div id="laylist"></div>
+      </section>
+    </div>
+  </div>
+
+  <footer>
+    <p><b>資料來源：</b>里界與分數同 A 版原型；液化潛勢（臺北市政府）；各里年齡人口 115 年 9 月（data.taipei）；逐棟屋齡為實價登錄 2011–2026 成交建物（每棟一點，只含有成交過的建物）；火災搶救困難地區與長巷道等列管清冊（臺北市消防局，依里別對應）；門牌座標為內政部門牌位置資料。</p>
+    <p>分數是一個里的平均狀況，不是單棟耐震評估。建物結構與耐震評估資料沒有開放。老屋比例用實價登錄成交建物推估，有成交的房子偏新，實際老屋比例約再高 11 個百分點。</p>
+    <p>資料整理日期：2026 年 10 月 24 日。</p>
+  </footer>
+</div>
+
+<script src="config.js"></script>
+<script src="lib/deck.gl-9.1.14.min.js"></script>
+<script src="lib/maplibre-gl-4.7.1.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

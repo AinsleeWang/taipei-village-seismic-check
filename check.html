@@ -1,0 +1,912 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>危老單棟初篩</title>
+<meta name="description" content="用手機量地板與牆柱傾斜、拍裂縫照片，加上屋齡與結構，自己先做一次四級初篩。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&family=Archivo+Black&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: 橘色帶放標題和四個步驟；下面一次顯示一個步驟卡；最後是四級結果。手機優先，寬螢幕置中。 */
+:root{
+  --paper:#fbf5ea; --card:#ffffff; --ink:#141414; --muted:#5a544c; --on:#ffffff;
+  --orange:#e8650a; --blue:#3f5ad8; --blue-2:#5671ec; --blue-3:#2b3fa6; --yellow:#ffd23f;
+  --green:#2f9e5b; --red:#d6332a;
+  --bd:3px solid var(--ink); --shadow:5px 5px 0 var(--ink);
+  --font:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --latin:"Archivo Black","Arial Black",Impact,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#1c1915;--card:#2a251f;--ink:#f3ece0;--muted:#b9b0a3}}
+:root[data-theme="dark"]{--paper:#1c1915;--card:#2a251f;--ink:#f3ece0;--muted:#b9b0a3}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--font);font-weight:500;font-size:16px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 48px}
+.wrap{max-width:760px;margin:0 auto;display:grid;gap:18px}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px}
+.brand{font-weight:900;font-size:1.4rem;letter-spacing:.04em;margin:0}
+.brand a{color:inherit;text-decoration:none}
+.chip{font-family:var(--mono);font-size:.72rem;font-weight:700;border:2px solid var(--ink);padding:2px 10px;background:var(--yellow);color:#141414;white-space:nowrap}
+.hero{background:var(--orange);border:var(--bd);box-shadow:var(--shadow);color:#141414}
+.hero-in{padding:18px clamp(16px,3vw,28px) 16px}
+.hero h1{font-weight:900;font-size:clamp(1.6rem,5vw,2.4rem);line-height:1.15;margin:0 0 6px}
+.hero p{margin:0;font-weight:700}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);border-top:3px solid #141414}
+.steps button{font:inherit;font-weight:900;font-size:.85rem;border:0;background:transparent;color:#141414;padding:10px 4px;cursor:pointer;display:grid;gap:0;justify-items:center;line-height:1.2}
+.steps button+button{border-left:3px solid #141414}
+.steps button b{font-family:var(--latin);font-size:1.15rem}
+.steps button[aria-current="step"]{background:#141414;color:var(--yellow)}
+.steps button.done b::after{content:" ✓"}
+.card{background:var(--card);border:var(--bd);box-shadow:var(--shadow)}
+.cap{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;padding:8px 14px;border-bottom:var(--bd);font-weight:900;background:var(--ink);color:var(--paper)}
+.cap small{font-family:var(--mono);font-weight:500;font-size:.72rem;opacity:.8}
+.in{padding:16px;display:grid;gap:16px}
+.q{display:grid;gap:8px}
+.q>label,.q>.lab{font-weight:900}
+.q .sub{font-size:.82rem;color:var(--muted);margin:0}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opts button{font:inherit;font-weight:700;font-size:.92rem;border:var(--bd);background:var(--card);color:var(--ink);padding:6px 12px;cursor:pointer;box-shadow:3px 3px 0 var(--ink)}
+.opts button[aria-pressed="true"]{background:var(--blue);color:#fff}
+input[type=number],#manDeg{font:inherit;font-weight:700;font-size:1.05rem;border:var(--bd);background:var(--card);color:var(--ink);padding:8px 12px;width:9em}
+button:focus-visible,input:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+.btn{font:inherit;font-weight:900;font-size:1rem;letter-spacing:.06em;background:#141414;color:#fff;border:3px solid #141414;padding:10px 20px;cursor:pointer;box-shadow:4px 4px 0 var(--orange)}
+.btn.y{background:var(--yellow);color:#141414;box-shadow:4px 4px 0 #141414}
+.btn.w{background:var(--card);color:var(--ink);border-color:var(--ink);box-shadow:4px 4px 0 var(--ink)}
+.btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 #141414}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.nav{display:flex;justify-content:space-between;gap:10px;padding:0 16px 16px}
+.note{font-size:.82rem;color:var(--muted);border-top:2px dashed var(--muted);padding-top:10px;margin:0}
+.warn{background:var(--yellow);color:#141414;border:2px solid #141414;padding:8px 12px;font-weight:700;font-size:.88rem;margin:0}
+
+/* 水平儀 */
+.level{display:grid;grid-template-columns:minmax(0,200px) minmax(0,1fr);gap:16px;align-items:center}
+@media (max-width:520px){.level{grid-template-columns:1fr;justify-items:center}}
+.dial{width:200px;height:200px;border-radius:50%;border:var(--bd);background:var(--blue);position:relative;overflow:hidden}
+.dial i{position:absolute;border:2px solid rgba(255,255,255,.55);border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%)}
+.dial .bub{position:absolute;width:38px;height:38px;border-radius:50%;background:var(--yellow);border:3px solid #141414;left:50%;top:50%;transform:translate(-50%,-50%);transition:transform .08s linear}
+.dial .bar{position:absolute;left:50%;top:6px;bottom:6px;width:40px;margin-left:-20px;border:2px solid rgba(255,255,255,.55);border-radius:20px}
+.read{display:grid;gap:6px}
+.big{font-family:var(--latin);font-size:3rem;line-height:1;font-variant-numeric:tabular-nums}
+.big small{font-family:var(--font);font-weight:900;font-size:1rem;margin-left:4px}
+.slope{font-weight:900;font-size:1.1rem}
+.badge{display:inline-block;font-weight:900;padding:1px 10px;border:2px solid #141414;color:#141414}
+.b0{background:#9fe0b6}.b1{background:var(--yellow)}.b2{background:#ffa25e}.b3{background:#ff7d74}
+.help{display:grid;gap:10px}
+.done{background:#9fe0b6;color:#141414;border:var(--bd);padding:10px 12px;font-weight:900;justify-content:space-between}
+.done span{flex:1 1 220px}
+.help ol{margin:0;padding-left:1.3em;font-weight:700;font-size:.92rem}
+.help li{margin:4px 0}
+a.btn{text-decoration:none;display:inline-block}
+.meas{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.meas li{display:flex;justify-content:space-between;gap:8px;border:2px solid var(--ink);padding:6px 10px;font-weight:700;font-size:.9rem}
+
+/* 裂縫 */
+.drop{border:3px dashed var(--ink);padding:18px;text-align:center;display:grid;gap:10px;justify-items:center}
+.canv{width:100%;border:var(--bd);display:block;background:#000}
+.togg{display:inline-flex;border:var(--bd)}
+.togg button{font:inherit;font-weight:900;font-size:.82rem;border:0;background:var(--card);color:var(--ink);padding:4px 12px;cursor:pointer}
+.togg button+button{border-left:var(--bd)}
+.togg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.dirs{display:grid;gap:6px}
+.drow{display:grid;grid-template-columns:5em 1fr 3em;gap:8px;align-items:center;font-size:.85rem;font-weight:700}
+.track{height:16px;border:2px solid var(--ink);position:relative;background:var(--paper)}
+.fill{position:absolute;inset:0 auto 0 0;background:var(--orange)}
+.drow .n{font-family:var(--mono);text-align:right;font-size:.8rem}
+.ai{background:var(--blue);color:#fff;border:var(--bd);padding:12px 14px;display:grid;gap:6px}
+.ai h3{margin:0;font-size:.95rem;color:var(--yellow)}
+.ai p{margin:0;font-size:.9rem}
+
+/* 結果 */
+.res{color:#141414}
+.res .head{padding:18px 16px;border-bottom:3px solid #141414;display:grid;gap:4px}
+.res .lv{font-family:var(--latin);font-size:3.2rem;line-height:1}
+.res .lt{font-weight:900;font-size:1.5rem;line-height:1.2}
+.res.l0{background:#9fe0b6}.res.l1{background:var(--yellow)}.res.l2{background:#ffa25e}.res.l3{background:#ff7d74}.res.lx{background:#d9d4cc}
+.res .body{background:#fff;padding:16px;display:grid;gap:14px}
+.res h3{margin:0;font-size:1rem}
+.res ul{margin:0;padding-left:1.2em}
+.res li{margin:2px 0}
+.ladder{display:grid;grid-template-columns:repeat(4,1fr);border:2px solid #141414}
+.ladder div{padding:6px 4px;text-align:center;font-size:.78rem;font-weight:900;line-height:1.25}
+.ladder div+div{border-left:2px solid #141414}
+.ladder div[data-on]{outline:4px solid #141414;outline-offset:-4px}
+footer{font-size:.78rem;color:var(--muted);display:grid;gap:4px}
+footer p{margin:0}
+[hidden]{display:none!important}
+.printbox{border-top:3px solid #141414;background:var(--card)}
+#addr{font:inherit;font-weight:700;border:var(--bd);background:var(--card);color:var(--ink);padding:8px 12px;width:100%}
+#report{display:none}
+@media print{
+  @page{size:A4;margin:14mm}
+  body{background:#fff;color:#000;padding:0}
+  .wrap>*:not(#report){display:none!important}
+  #report{display:block!important;font-size:11pt;line-height:1.5;color:#000}
+  #report h1{font-size:18pt;margin:0}
+  #report h2{font-size:12pt;margin:14px 0 6px;border-bottom:2px solid #000;padding-bottom:2px}
+  #report table{border-collapse:collapse;width:100%}
+  #report th,#report td{border:1px solid #000;padding:3px 8px;text-align:left;vertical-align:top}
+  #report th{width:9em;background:#eee}
+  #report .rhead{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:4px solid #000;padding-bottom:6px}
+  #report .rlv{border:3px solid #000;padding:8px 12px;display:flex;gap:14px;align-items:center;margin-top:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #report .rlv b{font-size:26pt;line-height:1;white-space:nowrap}
+  #report .rl0{background:#cdeedb}#report .rl1{background:#ffe98f}#report .rl2{background:#ffc79c}#report .rl3{background:#ffb3ad}
+  #report img{max-width:100%;max-height:85mm;border:1px solid #000;display:block}
+  #report .pics{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  #report ul{margin:0;padding-left:1.2em}
+  #report .badge{border:1px solid #000;padding:0 4px;font-size:9pt}
+  #report .sm{font-size:9pt;color:#333}
+  #report section{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="brand"><a href="index.html">危老檢查你我他</a></p>
+    <span class="chip">單棟初篩 · 自己先看一次</span>
+  </header>
+
+  <section class="hero">
+    <div class="hero-in">
+      <h1>我家這棟，<br>要不要找技師看？</h1>
+      <p>四個步驟、大約五分鐘。用手機量傾斜、拍裂縫，得到一個四級的初步提醒。</p>
+    </div>
+    <nav class="steps" id="steps" aria-label="步驟">
+      <button data-s="0" aria-current="step"><b>01</b>房子</button>
+      <button data-s="1"><b>02</b>傾斜</button>
+      <button data-s="2"><b>03</b>裂縫</button>
+      <button data-s="3"><b>04</b>結果</button>
+    </nav>
+  </section>
+
+  <p class="warn row" id="restored" hidden style="justify-content:space-between"><span id="restoredTxt"></span><button class="btn w" id="restoredClear" style="padding:2px 12px;font-size:.85rem;box-shadow:none">清除重來</button></p>
+
+  <!-- 01 房子 -->
+  <section class="card step" id="s0">
+    <div class="cap">01 先說說這棟房子 <small>不知道可以跳過</small></div>
+    <div class="in">
+      <div class="q">
+        <label for="year">建照或完工年份（民國）</label>
+        <div class="row"><input id="year" type="number" inputmode="numeric" min="1" max="116" placeholder="例如 72"><span class="sub">可看權狀、使用執照，或問管委會。知道建照年份更好：民國 88 年底改規範以前拿到建照的房子，可能到 90 年後才完工。</span></div>
+      </div>
+      <div class="q"><span class="lab">結構</span>
+        <div class="opts" data-k="struct">
+          <button data-v="rc">鋼筋混凝土（RC）</button><button data-v="brick">磚造／加強磚造</button><button data-v="steel">鋼骨</button><button data-v="na">不知道</button>
+        </div>
+      </div>
+      <div class="q"><span class="lab">一樓是不是很「空」？</span>
+        <p class="sub">例如騎樓、整片落地窗的店面、停車場挑空，一樓牆比樓上少很多。地震時這種「軟腳」最容易出事。</p>
+        <div class="opts" data-k="soft"><button data-v="yes">是</button><button data-v="no">不是</button><button data-v="na">不確定</button></div>
+      </div>
+      <div class="q"><span class="lab">土壤液化潛勢</span>
+        <p class="sub">可以在「<a href="index.html">危老分數地圖</a>」輸入地址查到。</p>
+        <div class="opts" data-k="liq"><button data-v="low">低</button><button data-v="mid">中</button><button data-v="high">高</button><button data-v="na">不知道</button></div>
+      </div>
+      <div class="q"><span class="lab">這棟建築物有沒有頂樓加蓋？</span>
+        <p class="sub">加蓋會讓房子上面變重，地震時搖得更厲害。</p>
+        <div class="opts" data-k="roof"><button data-v="yes">有</button><button data-v="no">沒有</button><button data-v="na">不確定</button></div>
+      </div>
+      <div class="q"><span class="lab">這棟建築物有沒有陽台外推？</span>
+        <p class="sub">把陽台圍進室內，常會拆掉原本的外牆、加重懸出去的樓板。</p>
+        <div class="opts" data-k="balc"><button data-v="yes">有</button><button data-v="no">沒有</button><button data-v="na">不確定</button></div>
+      </div>
+      <div class="q"><span class="lab">裝修時有沒有打掉過牆？</span>
+        <p class="sub">磚牆、混凝土牆這種實心的牆，地震時會幫忙分擔搖晃的力量；敲起來空空的木板、石膏板輕隔間，幾乎不出力。</p>
+        <div class="opts" data-k="wall"><button data-v="thick">有，打掉磚牆或混凝土牆</button><button data-v="thin">有，只拆輕隔間</button><button data-v="no">沒有</button><button data-v="na">不確定</button></div>
+      </div>
+    </div>
+    <div class="nav"><span></span><button class="btn" data-go="1">下一步：量傾斜 →</button></div>
+  </section>
+
+  <!-- 02 傾斜 -->
+  <section class="card step" id="s1" hidden>
+    <div class="cap">02 用手機量傾斜 <small>手機裡的陀螺儀</small></div>
+    <div class="in">
+      <div class="q"><span class="lab">要量什麼？</span>
+        <div class="togg" id="mode"><button data-m="floor" aria-pressed="true">地板（手機平放）</button><button data-m="wall" aria-pressed="false">柱子／牆（手機直立貼著）</button></div>
+        <p class="sub" id="modeHint">把手機螢幕朝上平放在地板上，最好放在房間中間、沒有地磚接縫的地方。拿掉手機殼比較準。<b>不要量浴室、陽台、廚房</b>，那些地板本來就做了排水的坡度。</p>
+      </div>
+      <div class="row"><button class="btn y" id="start">開始量</button><span class="sub" id="sensorMsg">iPhone 會先問你要不要允許「動作與方向」，請按允許。</span></div>
+      <div class="level" id="levelBox" hidden>
+        <div class="dial" id="dial"><i style="width:60px;height:60px"></i><i style="width:120px;height:120px"></i><span class="bar" hidden></span><span class="bub" id="bub"></span></div>
+        <div class="read">
+          <div class="big" id="deg">0.00<small>度</small></div>
+          <div class="slope" id="slope">約 —</div>
+          <div><span class="badge b0" id="tiltBadge">—</span></div>
+          <div class="row">
+            <button class="btn" id="rec">記下這次</button>
+            <button class="btn w" id="rec180" title="手機原地轉半圈再量一次，可以抵掉手機本身的誤差">轉 180° 再量</button>
+          </div>
+        </div>
+      </div>
+      <div class="help" id="sensorHelp" hidden></div>
+      <ul class="meas" id="meas"></ul>
+      <div class="done row" id="tiltDone" hidden><span>✓ 傾斜已經記下，這一步完成了。</span><button class="btn" data-go="2">下一步：拍裂縫 →</button><button class="btn w" id="addMore" style="padding:4px 12px;font-size:.85rem;box-shadow:none">另一個房間也想記</button></div>
+      <div class="q" id="manual" hidden>
+        <p class="sub"><b>或是先不用感測器：</b>用手機內建的「水平儀」（iPhone 在「測距儀」App 裡）量好填在下面，或選一個你觀察到的狀況。</p>
+        <div class="row"><input id="manDeg" type="text" inputmode="decimal" placeholder="度數，例如 -1"><button class="btn w" id="manAdd">記下</button></div>
+        <div class="opts" data-k="obs"><button data-v="none">看起來正常</button><button data-v="marble">彈珠會自己滾向同一邊</button><button data-v="door">門會自己開或關</button><button data-v="visible">肉眼就看得出歪</button></div>
+      </div>
+      <p class="note">判斷參考震後建築物緊急評估常用的傾斜門檻：超過 1/200（約 0.29 度）要留意，超過 1/40（約 1.43 度）屬於危險。地板本身做得不平、手機殼不平也會有零點幾度的誤差，所以建議用「轉 180° 再量」取平均，並在不同房間多量幾點。</p>
+    </div>
+    <div class="nav"><button class="btn w" data-go="0">← 上一步</button><button class="btn" data-go="2">下一步：拍裂縫 →</button></div>
+  </section>
+
+  <!-- 03 裂縫 -->
+  <section class="card step" id="s2" hidden>
+    <div class="cap">03 拍一張裂縫 <small>照片只在你的手機上分析</small></div>
+    <div class="in">
+      <div class="drop" id="drop">
+        <b>手機拿正，對著裂縫拍，讓裂縫占畫面一半左右</b>
+        <div class="row" style="justify-content:center">
+          <label class="btn y" for="cam" style="display:inline-block">📷 拍照</label>
+          <label class="btn w" for="pick" style="display:inline-block">選相簿照片</label>
+        </div>
+        <input id="cam" type="file" accept="image/*" capture="environment" hidden>
+        <input id="pick" type="file" accept="image/*" hidden>
+        <span class="sub">沒有裂縫也可以直接跳到下一步。</span>
+      </div>
+      <div id="crackOut" hidden>
+        <div class="row" style="justify-content:space-between;margin-bottom:8px">
+          <div class="togg" id="view"><button data-v="mark" aria-pressed="true">標出裂縫</button><button data-v="orig" aria-pressed="false">原圖</button></div>
+          <span class="sub" id="cstat"></span>
+        </div>
+        <canvas class="canv" id="cv"></canvas>
+      </div>
+      <div class="dirs" id="dirs" hidden></div>
+      <p class="warn" id="cwarn" hidden></p>
+      <div class="ai" id="aiBox" hidden>
+        <h3>請 Claude 看這張照片</h3>
+        <p id="aiTxt">自動辨識只看線條方向。Claude 可以多看裂縫在柱子、梁還是牆上，以及有沒有剝落、露筋。</p>
+        <div><button class="btn y" id="aiBtn">請 Claude 判讀</button></div>
+      </div>
+      <div class="q"><span class="lab">裂縫在哪裡？</span>
+        <div class="opts" data-k="where"><button data-v="col">柱子</button><button data-v="beam">梁</button><button data-v="lwall">外牆、樓梯間的厚牆</button><button data-v="pwall">一般隔間牆</button><button data-v="slab">天花板、樓板</button><button data-v="na">不確定</button></div>
+      </div>
+      <div class="q"><span class="lab">裂縫走向</span>
+        <p class="sub" id="dirHint">拍照後會自動帶入，你也可以自己改。</p>
+        <div class="opts" data-k="dir"><button data-v="h">橫的</button><button data-v="v">直的</button><button data-v="d">斜的</button><button data-v="x">X 型（交叉）</button><button data-v="net">網狀、龜裂</button></div>
+      </div>
+      <div class="q"><span class="lab">裂縫多寬？</span>
+        <p class="sub">拿名片（約 0.3 公釐）和悠遊卡（約 0.8 公釐）試著插進去。</p>
+        <div class="opts" data-k="width"><button data-v="hair">像頭髮，名片插不進</button><button data-v="mid">名片插得進</button><button data-v="wide">悠遊卡插得進或更寬</button></div>
+      </div>
+      <div class="q"><span class="lab">有沒有水泥或粉刷剝落、掉塊？</span>
+        <div class="opts" data-k="spall"><button data-v="yes">有</button><button data-v="no">沒有</button></div>
+      </div>
+      <div class="q"><span class="lab">看不看得到裡面的鋼筋？</span>
+        <p class="sub">剝落的地方露出鐵條，或有紅褐色的鏽水流出來。</p>
+        <div class="opts" data-k="rebar"><button data-v="yes">看得到</button><button data-v="no">看不到</button></div>
+      </div>
+    </div>
+    <div class="nav"><button class="btn w" data-go="1">← 上一步</button><button class="btn" data-go="3">看結果 →</button></div>
+  </section>
+
+  <!-- 04 結果 -->
+  <section class="card step" id="s3" hidden>
+    <div class="res l0" id="res"></div>
+    <div class="in printbox">
+      <div class="q"><label for="addr">地址或大樓名稱（只印在報告上，可不填）</label><input id="addr" type="text" placeholder="例如：○○路○段○號 ○樓"></div>
+      <div class="row"><button class="btn y" id="print">🖨 列印報告／存成 PDF</button></div>
+      <p class="sub" id="printHint">報告有你填的房子資料、傾斜紀錄、裂縫照片和結果，可以拿給管委會、技師或申請初評時參考。手機上在列印畫面選「儲存為 PDF」或分享即可。</p>
+    </div>
+    <p class="sub" style="margin:0 16px 10px">填的內容只存在這支手機（在 Claude 裡打開時存在你的帳號），7 天後自動清掉。用共用的手機或電腦時，填完請按「清除我的資料」。</p>
+    <div class="nav" style="padding-top:0"><button class="btn w" data-go="2">← 回去修改</button><button class="btn w" id="restart">清除我的資料</button></div>
+  </section>
+
+  <article id="report" aria-hidden="true"></article>
+
+  <footer>
+    <p>這是自我初篩，只能當提醒，不能取代土木、結構技師或建築師的耐震評估。結果不會上傳；照片只有在你按下「請 Claude 判讀」時才會送出。</p>
+    <p>裂縫自動辨識的做法：在照片裡找比周圍暗的細長線條，再算出每條線的方向。磁磚縫、木紋、電線、陰影也可能被當成裂縫，請以你自己看到的為準。</p>
+  </footer>
+</div>
+
+<script>
+(() => {
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const KEY = 'weilao-check-draft-v1';
+let saveT = null, restoringNow = false;
+const st = { year:null, struct:null, soft:null, liq:null, roof:null, balc:null, wall:null, obs:null, where:null, dir:null, width:null, spall:null, rebar:null, tilts:[], auto:null, ai:null };
+
+/* ---------- 步驟切換 ---------- */
+let cur = 0;
+function go(n){
+  cur = n;
+  $$('.step').forEach((el,i) => el.hidden = i !== n);
+  $$('#steps button').forEach((b,i) => { b.toggleAttribute('aria-current', i === n); if (i === n) b.setAttribute('aria-current','step'); });
+  if (n === 3) renderResult();
+  if (n !== 1) stopSensor();
+  save();
+  $('.hero').scrollIntoView({behavior:'smooth', block:'start'});
+}
+$$('#steps button').forEach(b => b.onclick = () => go(+b.dataset.s));
+$$('[data-go]').forEach(b => b.onclick = () => go(+b.dataset.go));
+
+/* ---------- 選項按鈕 ---------- */
+function setOpt(k, v){
+  st[k] = v;
+  $$(`.opts[data-k="${k}"] button`).forEach(b => b.setAttribute('aria-pressed', b.dataset.v === v));
+  if (k === 'obs') tiltDone();
+  save();
+}
+$$('.opts').forEach(g => g.querySelectorAll('button').forEach(b => {
+  b.setAttribute('aria-pressed','false');
+  b.onclick = () => setOpt(g.dataset.k, st[g.dataset.k] === b.dataset.v ? null : b.dataset.v);
+}));
+$('#year').oninput = e => { const v = parseInt(e.target.value, 10); st.year = v > 0 ? v : null; save(); };
+
+/* ---------- 02 傾斜 ---------- */
+const DEG = 180 / Math.PI;
+let mode = 'floor', listening = false, gotEvent = false, buf = [], last = null, pending180 = null;
+function tiltBand(d){ return d >= 1.432 ? 3 : d >= 0.286 ? 2 : d >= 0.115 ? 1 : 0; }
+const bandTxt = ['正常範圍','輕微，多量幾點','超過 1/200，要留意','超過 1/40，危險'];
+function slopeTxt(d){ if (d < 0.005) return '幾乎水平'; return '約 1/' + Math.round(1 / Math.tan(d / DEG)); }
+
+$$('#mode button').forEach(b => b.onclick = () => {
+  mode = b.dataset.m; pending180 = null;
+  $$('#mode button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  $('#modeHint').textContent = mode === 'floor'
+    ? '把手機螢幕朝上平放在地板上，最好放在房間中間、沒有地磚接縫的地方。拿掉手機殼比較準。不要量浴室、陽台、廚房，那些地板本來就做了排水的坡度。'
+    : '把手機直立（直向），長邊貼緊柱子、門框或牆角，螢幕朝向你。量的是柱或牆偏離垂直多少。';
+  $('#dial .bar').hidden = mode !== 'wall';
+  $('#rec180').hidden = mode !== 'floor';
+  buf = [];
+});
+
+// 由 beta/gamma 算出「上方」在手機座標中的方向 u = (-sinγcosβ, sinβ, cosγcosβ)
+function onOri(e){
+  if (e.beta == null || e.gamma == null) return;
+  gotEvent = true;
+  const b = e.beta / DEG, g = e.gamma / DEG;
+  const u = [-Math.sin(g) * Math.cos(b), Math.sin(b), Math.cos(g) * Math.cos(b)];
+  buf.push(u); if (buf.length > 30) buf.shift();
+  const m = [0,1,2].map(i => buf.reduce((s,v) => s + v[i], 0) / buf.length);
+  let deg, bx, by;
+  if (mode === 'floor'){
+    deg = Math.acos(Math.min(1, Math.abs(m[2]) / Math.hypot(...m))) * DEG;
+    bx = m[0]; by = -m[1];
+    last = { deg, vx:m[0], vy:m[1] };
+  } else {
+    deg = Math.acos(Math.min(1, Math.abs(m[1]) / Math.hypot(...m))) * DEG;
+    bx = m[0]; by = 0;
+    last = { deg };
+  }
+  const k = 90 / Math.sin(3 / DEG); // 3 度時泡泡到邊
+  const px = Math.max(-80, Math.min(80, bx * k)), py = Math.max(-80, Math.min(80, by * k));
+  $('#bub').style.transform = `translate(calc(-50% + ${px}px), calc(-50% + ${py}px))`;
+  $('#deg').innerHTML = deg.toFixed(2) + '<small>度</small>';
+  $('#slope').textContent = slopeTxt(deg);
+  const bd = tiltBand(deg); const tb = $('#tiltBadge');
+  tb.className = 'badge b' + bd; tb.textContent = bandTxt[bd];
+}
+function stopSensor(){ if (listening){ window.removeEventListener('deviceorientation', onOri); listening = false; } }
+// 讀不到感測器時，依情況給對的解法。網頁沒辦法直接打開手機的「設定」，所以只能給步驟。
+const inFrame = (() => { try { return window.self !== window.top; } catch { return true; } })();
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isAndroid = /Android/.test(navigator.userAgent);
+const isMobile = isIOS || isAndroid;
+function sensorHelp(reason){
+  $('#levelBox').hidden = true; $('#manual').hidden = false;
+  $('#sensorMsg').textContent = '';
+  let h = '';
+  if (!isMobile){
+    h = '<p class="warn">電腦沒有傾斜感測器，請用手機打開這一頁。</p>';
+  } else if (inFrame){
+    const canOpen = /^https?:$/.test(location.protocol);
+    h = `<p class="warn">這一頁現在是「嵌在別的頁面裡」打開的（例如 Claude 的預覽視窗），手機系統不讓嵌入的頁面讀感測器，所以不是你按錯。</p>
+      <ol><li>按下面的按鈕，用瀏覽器直接開這一頁${isIOS ? '（請用 Safari）' : ''}。</li><li>再按一次「開始量」${isIOS ? '，跳出詢問時選「允許」' : ''}。</li></ol>
+      <div class="row">${canOpen ? '<a class="btn y" id="openTop" href="' + location.href.replace(/"/g, '&quot;') + '" target="_blank" rel="noopener">在瀏覽器開啟這一頁 ↗</a>' : ''}<button class="btn w" data-retry>再試一次</button></div>`;
+  } else if (isIOS){
+    h = `<p class="warn">${reason === 'denied' ? 'iPhone 記住了上次的「不允許」。' : 'iPhone 沒有給這一頁感測器資料。'}網頁沒辦法直接跳到「設定」，請照下面做：</p>
+      <ol><li>把這個 Safari 分頁完全關掉，重新打開這一頁，按「開始量」時選「允許」。</li>
+      <li>還是不行的話：打開「設定」→「App」→「Safari」→「進階」→「網站資料」，找到這個網站往左滑刪除，再回來重開這一頁。</li>
+      <li>如果是在 LINE、Facebook 裡點開的，請按右上角「⋯」選「用 Safari 開啟」。</li></ol>
+      <div class="row"><button class="btn y" data-retry>再試一次</button></div>`;
+  } else {
+    h = `<p class="warn">Chrome 把這一頁的「動作感應器」關掉了。網頁沒辦法直接跳到設定，請照下面做：</p>
+      <ol><li>按網址列左邊的 <b>鎖頭或設定圖示</b> →「權限」→ 打開「動作感應器」。</li>
+      <li>找不到的話：右上角「⋮」→「設定」→「網站設定」→「動作感應器」，改成允許。</li>
+      <li>如果是在 LINE、Facebook 裡點開的，請改用 Chrome 開啟。</li></ol>
+      <div class="row"><button class="btn y" data-retry>再試一次</button></div>`;
+  }
+  const el = $('#sensorHelp'); el.innerHTML = h; el.hidden = false;
+  // 新分頁和嵌入的頁面不共用瀏覽器儲存，所以把已填的內容（不含照片）放進網址帶過去
+  const ot = el.querySelector('#openTop');
+  if (ot) ot.onclick = () => { ot.href = location.href.split('#')[0] + '#d=' + encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify({ ...draft(false), st:{ ...st, addr:'' } }))))); };
+  el.querySelectorAll('[data-retry]').forEach(b => b.onclick = () => $('#start').click());
+}
+$('#start').onclick = async () => {
+  $('#sensorHelp').hidden = true;
+  const D = window.DeviceOrientationEvent;
+  if (!D) return sensorHelp('none');
+  if (typeof D.requestPermission === 'function'){
+    try { const r = await D.requestPermission(); if (r !== 'granted') return sensorHelp('denied'); }
+    catch { return sensorHelp('blocked'); }
+  }
+  window.addEventListener('deviceorientation', onOri); listening = true; gotEvent = false;
+  $('#levelBox').hidden = false; $('#manual').hidden = true; $('#sensorMsg').textContent = '放好後等兩秒，數字穩定再按「記下這次」。';
+  setTimeout(() => { if (!gotEvent){ stopSensor(); sensorHelp('silent'); } }, 2500);
+};
+function addTilt(t){ st.tilts.push(t); renderMeas(); }
+function renderMeas(){
+  save();
+  $('#meas').innerHTML = st.tilts.map((t,i) => `<li><span>${escapeHtml(t.label)}</span><span>${t.deg.toFixed(2)} 度 · ${slopeTxt(t.deg)} <span class="badge b${tiltBand(t.deg)}">${['正常','輕微','留意','危險'][tiltBand(t.deg)]}</span> <button class="btn w" style="padding:0 8px;font-size:.8rem;box-shadow:none" data-del="${i}" aria-label="刪除">×</button></span></li>`).join('');
+  $$('#meas [data-del]').forEach(b => b.onclick = () => { st.tilts.splice(+b.dataset.del, 1); renderMeas(); });
+  tiltDone();
+}
+$('#rec').onclick = () => {
+  if (!last) return;
+  const n = st.tilts.filter(t => t.mode === mode).length + 1;
+  addTilt({ mode, deg:last.deg, label:(mode === 'floor' ? '地板' : '柱／牆') + ' 第 ' + n + ' 點' });
+};
+$('#rec180').onclick = () => {
+  if (!last || mode !== 'floor') return;
+  if (!pending180){
+    pending180 = { vx:last.vx, vy:last.vy };
+    $('#rec180').textContent = '轉好了，記下第二次';
+    $('#sensorMsg').textContent = '手機在原地轉半圈（頭尾對調），放好等兩秒再按。';
+  } else {
+    // 兩次讀數相減除以二：地板真正的傾斜留下，手機本身的偏差抵掉
+    const sx = (pending180.vx - last.vx) / 2, sy = (pending180.vy - last.vy) / 2;
+    const deg = Math.asin(Math.min(1, Math.hypot(sx, sy))) * DEG;
+    pending180 = null; $('#rec180').textContent = '轉 180° 再量';
+    $('#sensorMsg').textContent = '已扣掉手機誤差。';
+    addTilt({ mode:'floor', deg, label:'地板（轉 180° 平均）', cal:true });
+  }
+};
+// 水平儀 App 會顯示負號（表示往哪一邊斜），傾斜程度只看大小
+$('#manAdd').onclick = () => {
+  const v = Math.abs(parseFloat(String($('#manDeg').value).replace(/[°度\s]/g, '').replace(/[，,]/g, '.')));
+  if (!isFinite(v) || v > 45) { $('#manDeg').focus(); return; }
+  addTilt({ mode:'manual', deg:v, label:'水平儀 App 量的' }); $('#manDeg').value = '';
+};
+$('#manDeg').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); $('#manAdd').click(); } };
+// 記好之後把輸入框收起來，免得看起來還要再填一次；要多記再按「另一個房間也想記」打開
+let manualTucked = false;
+function tiltDone(){
+  const done = st.tilts.length > 0 || !!st.obs;
+  $('#tiltDone').hidden = !done;
+  if (done){
+    $('#sensorHelp').hidden = true;
+    if (!$('#manual').hidden){ $('#manual').hidden = true; manualTucked = true; }
+    $('#start').hidden = true; $('#sensorMsg').textContent = '';
+  } else {
+    $('#start').hidden = false;
+    if (manualTucked){ $('#manual').hidden = false; manualTucked = false; }
+  }
+}
+$('#addMore').onclick = () => {
+  $('#start').hidden = false;
+  if (manualTucked || !listening){ $('#manual').hidden = false; manualTucked = false; $('#manDeg').focus(); }
+};
+
+/* ---------- 03 裂縫辨識（瀏覽器內） ---------- */
+let photo = null, photoBlob = null, photoData = null, analysis = null, viewMode = 'mark';
+['#cam','#pick'].forEach(id => $(id).onchange = e => { const f = e.target.files[0]; if (f) loadPhoto(f); e.target.value = ''; });
+function loadPhoto(src, restoring){
+  const img = new Image();
+  img.onload = () => { photo = img; if (!restoring) st.ai = null; analysis = analyze(img); draw(); showAnalysis(restoring); makeBlob(img); };
+  img.src = typeof src === 'string' ? src : URL.createObjectURL(src);
+}
+function makeBlob(img){
+  const s = Math.min(1, 1024 / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  c.toBlob(b => { photoBlob = b; }, 'image/jpeg', 0.85);
+  // 草稿裡存一張小一點的照片，重新整理後還看得到
+  const s2 = Math.min(1, 800 / Math.max(img.naturalWidth, img.naturalHeight));
+  const c2 = document.createElement('canvas'); c2.width = Math.round(img.naturalWidth * s2); c2.height = Math.round(img.naturalHeight * s2);
+  c2.getContext('2d').drawImage(img, 0, 0, c2.width, c2.height);
+  photoData = c2.toDataURL('image/jpeg', 0.75); save();
+}
+
+function analyze(img){
+  const s = Math.min(1, 640 / Math.max(img.naturalWidth, img.naturalHeight));
+  const W = Math.round(img.naturalWidth * s), H = Math.round(img.naturalHeight * s), N = W * H;
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0, W, H);
+  const px = ctx.getImageData(0, 0, W, H).data;
+  // 灰階 + 3x3 平滑
+  const g0 = new Float32Array(N);
+  for (let i = 0; i < N; i++) g0[i] = 0.299 * px[i*4] + 0.587 * px[i*4+1] + 0.114 * px[i*4+2];
+  const g = new Float32Array(N);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++){
+    let sum = 0, n = 0;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++){ const xx = x+dx, yy = y+dy; if (xx>=0&&yy>=0&&xx<W&&yy<H){ sum += g0[yy*W+xx]; n++; } }
+    g[y*W+x] = sum / n;
+  }
+  // 積分影像算局部平均：裂縫 = 比周圍暗的地方
+  const I = new Float64Array((W+1) * (H+1));
+  for (let y = 0; y < H; y++){ let row = 0; for (let x = 0; x < W; x++){ row += g[y*W+x]; I[(y+1)*(W+1)+x+1] = I[y*(W+1)+x+1] + row; } }
+  const r = Math.max(8, Math.round(Math.min(W, H) / 30));
+  const diff = new Float32Array(N); let mu = 0, m2 = 0;
+  for (let y = 0; y < H; y++){
+    const y0 = Math.max(0, y-r), y1 = Math.min(H, y+r+1);
+    for (let x = 0; x < W; x++){
+      const x0 = Math.max(0, x-r), x1 = Math.min(W, x+r+1);
+      const mean = (I[y1*(W+1)+x1] - I[y0*(W+1)+x1] - I[y1*(W+1)+x0] + I[y0*(W+1)+x0]) / ((y1-y0)*(x1-x0));
+      const d = mean - g[y*W+x]; diff[y*W+x] = d; mu += d; m2 += d*d;
+    }
+  }
+  mu /= N; const sd = Math.sqrt(Math.max(0, m2 / N - mu*mu));
+  const thr = Math.max(10, mu + 2.4 * sd);
+  const mask = new Uint8Array(N);
+  for (let i = 0; i < N; i++) if (diff[i] > thr) mask[i] = 1;
+  // 連通區塊，留下細長的
+  const lab = new Int32Array(N).fill(-1), comps = [], stack = [];
+  const minDim = Math.min(W, H), minArea = Math.max(12, N * 0.00015);
+  for (let i = 0; i < N; i++){
+    if (!mask[i] || lab[i] >= 0) continue;
+    const id = comps.length; let n = 0, sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0; const pix = [];
+    stack.push(i); lab[i] = id;
+    while (stack.length){
+      const p = stack.pop(), x = p % W, y = (p / W) | 0;
+      n++; sx += x; sy += y; sxx += x*x; syy += y*y; sxy += x*y; pix.push(p);
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++){
+        const xx = x+dx, yy = y+dy; if (xx<0||yy<0||xx>=W||yy>=H) continue;
+        const q = yy*W+xx; if (mask[q] && lab[q] < 0){ lab[q] = id; stack.push(q); }
+      }
+    }
+    const cx = sx/n, cy = sy/n, a = sxx/n - cx*cx, b = sxy/n - cx*cy, d = syy/n - cy*cy;
+    const tr = a + d, det = a*d - b*b, l1 = tr/2 + Math.sqrt(Math.max(0, tr*tr/4 - det)), l2 = Math.max(0.25, tr - l1);
+    const ang = ((Math.atan2(2*b, a - d) / 2) * DEG + 180) % 180; // 0 = 橫，90 = 直
+    const len = 4 * Math.sqrt(l1), elong = Math.sqrt(l1 / l2);
+    const keep = n >= minArea && (elong >= 3.2 || len >= 0.35 * minDim) && len >= 0.06 * minDim && n / (len * len) < 0.25;
+    comps.push({ n, cx, cy, ang, len, keep, pix });
+  }
+  const kept = comps.filter(c => c.keep);
+  const area = kept.reduce((s, c) => s + c.n, 0);
+  // 每條線的方向，依長度加權；彎的長裂縫切成小段各自算方向
+  const bins = { h:0, v:0, d1:0, d2:0 };
+  const segs = [];
+  kept.forEach(c => {
+    if (c.len < 0.25 * minDim){ segs.push({ ang:c.ang, w:c.len }); return; }
+    const cell = Math.max(12, Math.round(minDim / 12)), grid = new Map();
+    c.pix.forEach(p => { const x = p % W, y = (p / W) | 0, key = ((x/cell)|0) + ',' + ((y/cell)|0); (grid.get(key) || grid.set(key, []).get(key)).push(p); });
+    grid.forEach(ps => {
+      if (ps.length < 8) return;
+      let sx=0, sy=0, sxx=0, syy=0, sxy=0;
+      ps.forEach(p => { const x = p % W, y = (p / W) | 0; sx+=x; sy+=y; sxx+=x*x; syy+=y*y; sxy+=x*y; });
+      const n = ps.length, cx=sx/n, cy=sy/n, a=sxx/n-cx*cx, b=sxy/n-cx*cy, d=syy/n-cy*cy;
+      segs.push({ ang:((Math.atan2(2*b, a-d)/2)*DEG + 180) % 180, w:Math.sqrt(n) });
+    });
+  });
+  segs.forEach(sg => { const a = sg.ang; if (a < 22.5 || a >= 157.5) bins.h += sg.w; else if (a >= 67.5 && a < 112.5) bins.v += sg.w; else if (a < 90) bins.d1 += sg.w; else bins.d2 += sg.w; });
+  const tot = bins.h + bins.v + bins.d1 + bins.d2 || 1;
+  const p = { h:bins.h/tot, v:bins.v/tot, d1:bins.d1/tot, d2:bins.d2/tot };
+  const frac = area / N;
+  let dir = null, conf = 'ok';
+  if (frac < 0.0008 || !kept.length) conf = 'none';
+  else if (frac > 0.10) conf = 'noisy';
+  if (conf !== 'none'){
+    const diag = p.d1 + p.d2;
+    if (p.d1 >= 0.2 && p.d2 >= 0.2 && diag >= 0.5) dir = 'x';
+    else if (diag >= 0.5) dir = 'd';
+    else if (p.h >= 0.5) dir = 'h';
+    else if (p.v >= 0.5) dir = 'v';
+    else if (kept.length >= 8) dir = 'net';
+    else dir = diag >= Math.max(p.h, p.v) ? 'd' : p.h > p.v ? 'h' : 'v';
+    if (p.h >= 0.25 && p.v >= 0.25 && dir !== 'x') conf = 'grid';
+  }
+  return { W, H, mask:kept, p, dir, conf, count:kept.length, frac };
+}
+const dirName = { h:'橫的', v:'直的', d:'斜的', x:'X 型（交叉）', net:'網狀、龜裂' };
+function draw(){
+  if (!photo || !analysis) return;
+  const { W, H } = analysis, cv = $('#cv');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+  ctx.drawImage(photo, 0, 0, W, H);
+  if (viewMode === 'mark'){
+    ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(0, 0, W, H);
+    const im = ctx.getImageData(0, 0, W, H), d = im.data;
+    analysis.mask.forEach(c => c.pix.forEach(p => {
+      for (const q of [p, p+1, p-1, p+W, p-W]) if (q >= 0 && q < W*H){ d[q*4] = 255; d[q*4+1] = 210; d[q*4+2] = 63; }
+    }));
+    ctx.putImageData(im, 0, 0);
+  }
+  $('#crackOut').hidden = false;
+}
+$$('#view button').forEach(b => b.onclick = () => { viewMode = b.dataset.v; $$('#view button').forEach(x => x.setAttribute('aria-pressed', x === b)); draw(); });
+function showAnalysis(restoring){
+  const a = analysis;
+  st.auto = a.conf === 'none' ? null : a.dir;
+  $('#cstat').textContent = a.conf === 'none' ? '沒找到明顯裂縫' : `找到 ${a.count} 條線`;
+  const rows = [['橫向', a.p.h], ['直向', a.p.v], ['斜向 ／', a.p.d2], ['斜向 ＼', a.p.d1]];
+  $('#dirs').hidden = a.conf === 'none';
+  $('#dirs').innerHTML = '<b>線條方向</b>' + rows.map(([k, v]) => `<div class="drow"><span>${k}</span><div class="track"><div class="fill" style="width:${(v*100).toFixed(0)}%"></div></div><span class="n">${(v*100).toFixed(0)}%</span></div>`).join('');
+  const w = $('#cwarn'); w.hidden = false;
+  if (a.conf === 'none') w.textContent = '照片裡沒找到明顯的裂縫線。可能是裂縫太細、拍太遠或太暗，請靠近一點、開燈再拍；或直接在下面自己選。';
+  else if (a.conf === 'noisy') w.textContent = '照片裡的線條太多（磁磚、壁紙、木紋），自動判讀不可靠，請以你自己看到的走向為準。';
+  else if (a.conf === 'grid') w.textContent = `自動判讀：${dirName[a.dir]}。橫線和直線都很多，可能是磁磚縫或窗框，請確認。`;
+  else w.textContent = `自動判讀：${dirName[a.dir]}，已幫你選好，不對的話請改。`;
+  if (st.auto && !restoring) { setOpt('dir', st.auto); $('#dirHint').textContent = '已依照片自動帶入，你也可以自己改。'; }
+  if (sampleFn) { $('#aiBox').hidden = false; $('#aiTxt').textContent = '自動辨識只看線條方向。Claude 可以多看裂縫在柱子、梁還是牆上，以及有沒有剝落、露筋。'; $('#aiBtn').hidden = false; }
+}
+
+/* ---------- 請 Claude 看照片（只有在 Claude 頁面裡才有） ---------- */
+let sampleFn = null;
+if (window.claude && claude.use){
+  claude.use('sample').then(async s => {
+    if (!s) return;
+    try { const lim = await s.limits(); if (!lim || !lim.images) return; } catch { return; }
+    sampleFn = s;
+    if (photo) $('#aiBox').hidden = false;
+  }).catch(() => {});
+}
+$('#aiBtn').onclick = async () => {
+  if (!sampleFn || !photoBlob) return;
+  const btn = $('#aiBtn'); btn.disabled = true; $('#aiTxt').textContent = 'Claude 正在看照片…（通常十幾秒）';
+  const prompt = `你是協助臺北市民做住宅地震安全「自我初篩」的助手。請看這張照片，判斷裡面的裂縫。只回傳一個 JSON 物件，不要其他文字，鍵如下：
+{"crack":true或false,"dir":"h"|"v"|"d"|"x"|"net"|"none"（橫、直、斜、X 型交叉、網狀龜裂），"where":"col"|"beam"|"lwall"|"pwall"|"slab"|"na"（柱、梁、外牆或厚牆、隔間牆、樓板天花板、看不出來），"width":"hair"|"mid"|"wide"|"na"（髮絲 <0.3mm、0.3–1mm、>1mm），"spall":true或false（水泥或粉刷剝落、掉塊），"rebar":true或false（看得到鋼筋或鏽水），"concern":"low"|"mid"|"high","summary":"給一般民眾看的兩三句繁體中文說明（臺灣用語），說明你看到什麼、要不要找技師，不要用驚嚇的語氣"}
+判斷原則：柱、梁上的斜向或 X 型裂縫屬於剪力裂縫，關注度高；露筋、剝落關注度高；粉刷層的細網狀龜裂、門窗角落的小斜裂通常關注度低。看不清楚就說看不清楚。`;
+  try {
+    const r = await sampleFn.json(prompt, { images:[photoBlob], modelTier:'default' });
+    st.ai = r;
+    showAi(r);
+    if (r.crack && dirName[r.dir]) setOpt('dir', r.dir);
+    if (r.where && r.where !== 'na' && !st.where) setOpt('where', r.where);
+    if (r.width && r.width !== 'na' && !st.width) setOpt('width', r.width);
+    if (r.spall === true) setOpt('spall', 'yes');
+    if (r.rebar === true) setOpt('rebar', 'yes');
+    btn.hidden = true;
+  } catch (e) {
+    $('#aiTxt').textContent = e && e.code === 'not_granted' ? '沒有允許使用 Claude，改用上面的自動辨識和你自己的判斷就可以。'
+      : e && e.code === 'rate_limited' ? 'Claude 現在太忙，請過一會兒再試。' : 'Claude 這次沒有判讀成功，請以自動辨識和你自己的判斷為準。';
+    if (e && e.code === 'not_granted') btn.hidden = true;
+  } finally { btn.disabled = false; }
+};
+function showAi(r){
+    const w = { col:'柱子', beam:'梁', lwall:'外牆或厚牆', pwall:'隔間牆', slab:'樓板或天花板', na:'看不出來' };
+    $('#aiBox').hidden = false; $('#aiBtn').hidden = true;
+    $('#aiTxt').innerHTML = `<b>${r.crack ? '看到裂縫' : '沒看到明顯裂縫'}</b>${r.crack ? `：${dirName[r.dir] || '走向不明'}，位置看起來是${w[r.where] || '看不出來'}${r.spall ? '，有剝落' : ''}${r.rebar ? '，看得到鋼筋' : ''}。` : '。'}<br>${escapeHtml(r.summary || '')}<br><small>已把 Claude 的判讀帶進下面的選項，請確認。</small>`;
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ---------- 04 四級結果 ---------- */
+const LV = [
+  { t:'目前沒看到明顯警訊', s:'保持關心，有大地震後再檢查一次。' },
+  { t:'有幾點要留意', s:'建議多量幾個地方、持續觀察裂縫有沒有變長變寬。' },
+  { t:'建議申請耐震初評', s:'請專業人員來看一次，臺北市對老屋耐震初步評估有補助。' },
+  { t:'盡快請技師現場檢查', s:'有結構安全的警訊，請盡快聯絡結構技師、土木技師或建築師。' }
+];
+function renderResult(){
+  const why = [];  // [level, text]
+  const add = (l, t) => why.push([l, t]);
+  const maxTilt = st.tilts.length ? Math.max(...st.tilts.map(t => t.deg)) : null;
+  if (maxTilt != null){
+    const b = tiltBand(maxTilt);
+    // 單一讀數可能是手機殼、地磚或地板坡度造成：要兩個點以上，或「轉 180° 平均」過的讀數超過 1/40，才判 D
+    const over = st.tilts.filter(t => tiltBand(t.deg) === 3);
+    const sure = over.length >= 2 || over.some(t => t.cal);
+    if (b === 3 && sure) add(3, `量到的傾斜 ${maxTilt.toFixed(2)} 度（${slopeTxt(maxTilt)}），超過 1/40，而且不只一個讀數。`);
+    else if (b === 3) add(2, `有一個讀數 ${maxTilt.toFixed(2)} 度（${slopeTxt(maxTilt)}）超過 1/40，但只有一點。請換個地方、用「轉 180° 再量」再量一次確認，避開浴室、陽台、廚房。`);
+    else if (b === 2) add(2, `量到的傾斜 ${maxTilt.toFixed(2)} 度（${slopeTxt(maxTilt)}），超過 1/200。`);
+    else if (b === 1) add(1, `量到的傾斜 ${maxTilt.toFixed(2)} 度，還在 1/200 以內，建議多量幾點。`);
+  }
+  if (st.obs === 'visible') add(3, '肉眼就看得出房子歪。');
+  if (st.obs === 'door') add(2, '門會自己開或關，可能有傾斜，建議用手機實際量。');
+  if (st.obs === 'marble') add(1, '彈珠會往同一邊滾，建議用手機實際量。');
+
+  const structural = st.where === 'col' || st.where === 'beam';
+  const shear = st.dir === 'd' || st.dir === 'x';
+  const hasCrack = st.dir || st.width || st.where;
+  if (st.rebar === 'yes') add(3, '看得到鋼筋，鋼筋可能已經鏽蝕，會讓柱、梁變弱。');
+  else if (st.spall === 'yes' && structural) add(2, `${st.where === 'col' ? '柱子' : '梁'}的水泥剝落，雖然還看不到鋼筋，也建議請人看。`);
+  else if (st.spall === 'yes') add(1, '有水泥或粉刷剝落，多半是表面的粉刷層，請留意有沒有擴大、會不會掉落傷人。');
+  if (hasCrack){
+    const wn = { hair:'髮絲般', mid:'0.3 公釐以上', wide:'0.8 公釐以上' }[st.width] || '';
+    const pos = { col:'柱子', beam:'梁', lwall:'外牆或厚牆', pwall:'隔間牆', slab:'樓板', na:'' }[st.where] || '';
+    const desc = `${pos}上${wn ? wn + '的' : '有'}${dirName[st.dir] ? dirName[st.dir].replace('（交叉）','') : ''}裂縫`;
+    if (structural && shear && st.width && st.width !== 'hair') add(3, `${desc}。柱、梁的斜向或 X 型裂縫是受力造成的剪力裂縫。`);
+    else if (structural && st.width === 'wide') add(3, `${desc}，寬度已超過 0.8 公釐。`);
+    else if (structural && shear) add(2, `${desc}。柱、梁出現斜向裂縫，即使很細也建議請人看。`);
+    else if (structural && st.width === 'mid') add(2, `${desc}。`);
+    else if (st.where === 'lwall' && shear && st.width !== 'hair') add(2, `${desc}，承重的牆出現斜向裂縫。`);
+    else if (st.where === 'slab' && st.width === 'wide') add(2, `${desc}。`);
+    else if (st.width === 'wide' || st.width === 'mid') add(1, `${desc}，多半是牆面或粉刷層，請記下長度，觀察有沒有變大。`);
+    else if (st.dir === 'net') add(0, '網狀細裂多半是粉刷層收縮，通常不影響結構。');
+    else if (structural) add(1, `${desc}，持續觀察。`);
+  }
+
+  const old = st.year != null && st.year <= 90;   // 88 年底改規範，建照早於此的可能到 90 年才完工
+  const veryOld = st.year != null && st.year <= 63;
+  const weak = [];
+  if (st.soft === 'yes') weak.push('一樓牆少（軟腳）');
+  if (st.liq === 'high') weak.push('土壤液化高潛勢');
+  if (st.struct === 'brick') weak.push('磚造或加強磚造');
+  if (st.roof === 'yes') weak.push('有頂樓加蓋');
+  if (st.balc === 'yes') weak.push('有陽台外推');
+  if (st.wall === 'thick') weak.push('打掉過磚牆或混凝土牆');
+  if (old && weak.length) add(2, `民國 ${st.year} 年${st.year > 88 ? '（可能仍是 921 地震前的舊規範設計）' : '，早於 921 地震後的耐震規範'}，又有${weak.join('、')}。`);
+  else if (old) add(1, `民國 ${st.year} 年${st.year > 88 ? '，可能仍是 921 地震前的舊規範設計' : '，早於 921 地震後的耐震規範'}${veryOld ? '，也早於民國 63 年第一版耐震規定' : ''}。`);
+  else if (weak.length) add(1, `${weak.join('、')}。`);
+  if (st.liq === 'mid' && !weak.includes('土壤液化高潛勢')) add(1, '土壤液化中潛勢。');
+
+  let lv = why.reduce((m, w) => Math.max(m, w[0]), 0);
+  why.sort((a, b) => b[0] - a[0]);
+  const missing = [];
+  if (!st.tilts.length && !st.obs) missing.push('傾斜');
+  if (!hasCrack && st.spall == null && st.rebar == null) missing.push('裂縫');
+  if (st.year == null) missing.push('屋齡');
+  // 選「不知道／不確定」不能當成沒問題
+  const NA = { struct:'結構', soft:'一樓是不是很空', liq:'土壤液化潛勢', roof:'頂樓加蓋', balc:'陽台外推', wall:'打掉過牆', where:'裂縫位置' };
+  const unsure = Object.keys(NA).filter(k => st[k] === 'na').map(k => NA[k]);
+  const blank = ['struct','soft','liq','roof','balc','wall'].filter(k => st[k] == null).map(k => NA[k]);
+  const el = $('#res');
+  if (lv === 0 && missing.length === 3){
+    el.className = 'res lx';
+    el.innerHTML = `<div class="head"><div class="lv">？</div><div class="lt">資料不足，還不能判斷</div><div>傾斜、裂縫、屋齡都還沒填。至少填一項，才能給你初篩結果。</div></div>
+      <div class="body"><div class="row"><button class="btn" data-go2="0">填房子資料</button><button class="btn w" data-go2="1">量傾斜</button><button class="btn w" data-go2="2">拍裂縫</button></div></div>`;
+    el.querySelectorAll('[data-go2]').forEach(b => b.onclick = () => go(+b.dataset.go2));
+    $$('#steps button').forEach(b => b.classList.remove('done'));
+    lastResult = { lv:-1, el };
+    return;
+  }
+  const yrsOld = st.year != null ? 115 - st.year : null;
+  el.className = 'res l' + lv;
+  el.innerHTML = `
+    <div class="head"><div class="sm" style="font-weight:900;font-size:.85rem">單棟初篩等級</div><div class="lv">${['A','B','C','D'][lv]} 級</div><div class="lt">${LV[lv].t}</div><div>${LV[lv].s}</div>${unsure.length ? `<div style="font-weight:900">有 ${unsure.length} 項你選了不確定，實際狀況可能比這個結果差。</div>` : ''}</div>
+    <div class="body">
+      <div class="ladder">${LV.map((l, i) => `<div class="b${i}"${i === lv ? ' data-on' : ''}>${'ABCD'[i]}<br>${['沒警訊','要留意','申請初評','盡快檢查'][i]}</div>`).join('')}</div>
+      <div><h3>為什麼</h3>${why.filter(w => w[0] > 0 || why.length === 1).length ? '<ul>' + why.map(w => `<li><span class="badge b${w[0]}">${'ABCD'[w[0]]}</span> ${w[1]}</li>`).join('') + '</ul>' : '<p style="margin:0">你填的項目裡沒有看到警訊。</p>'}</div>
+      ${missing.length || unsure.length || blank.length ? `<p class="warn">${missing.length ? `還沒做：${missing.join('、')}。` : ''}${unsure.length ? `不確定：${unsure.join('、')}。` : ''}${blank.length ? `沒填：${blank.join('、')}。` : ''}補上會更準，不確定的可以問管委會或看建物謄本。</p>` : ''}
+      <div><h3>接下來可以</h3><ul>
+        ${lv >= 3 ? '<li>先拍照記錄裂縫和傾斜的位置，聯絡結構技師、土木技師或建築師到現場看。</li><li>如果是大地震剛過，裂縫、傾斜持續變大，先離開建築物，打 119 或 1999。</li>' : ''}
+        ${lv >= 2 ? '<li>申請「耐震能力初步評估」：臺北市對舊建築有補助，可打 <a href="tel:1999">1999</a> 或到<a href="https://dba.gov.taipei/" target="_blank" rel="noopener">臺北市建築管理工程處</a>網站查詢。</li><li>跟管委會或鄰居一起申請，同一棟一起評估比較省事。</li>' : ''}
+        ${lv >= 1 ? '<li>在裂縫兩端用鉛筆畫記號、寫日期，一兩個月後看有沒有變長。</li>' : ''}
+        ${yrsOld == null ? '<li>如果屋齡超過 30 年，可以了解「危老重建」的條件和獎勵（<a href="https://uro.gov.taipei/" target="_blank" rel="noopener">臺北市都市更新處</a>）。</li>' : yrsOld >= 30 ? `<li>屋齡約 ${yrsOld} 年，已超過 30 年，可以了解「危老重建」的條件和獎勵（<a href="https://uro.gov.taipei/" target="_blank" rel="noopener">臺北市都市更新處</a>）。</li>` : ''}
+        <li>回到<a href="index.html">危老分數地圖</a>看看你家這一里的整體風險。地圖上的是「里的風險分級」（整個里的平均），和這裡的「單棟初篩等級」不一樣。</li>
+      </ul></div>
+      <p class="note" style="color:#5a544c;border-color:#5a544c">這是自我初篩，只能當提醒，不能取代專業的耐震評估。傾斜門檻 1/200 與 1/40 是震後緊急評估用來看「整棟建物」傾斜的門檻，地板局部不平不等於整棟傾斜。耐震規範年份以民國 63 年第一版、民國 88 年 921 地震後修訂為分界，考慮建照到完工的時間，放寬到 90 年。</p>
+    </div>`;
+  $$('#steps button').forEach((b, i) => b.classList.toggle('done', i < 3 && (i === 0 ? st.year != null || st.struct : i === 1 ? st.tilts.length || st.obs : hasCrack || st.spall || st.rebar)));
+  lastResult = { lv, el };
+}
+
+/* ---------- 列印報告 ---------- */
+let lastResult = null;
+const LBL = {
+  struct:{ rc:'鋼筋混凝土（RC）', brick:'磚造／加強磚造', steel:'鋼骨', na:'不知道' },
+  soft:{ yes:'是', no:'不是', na:'不確定' }, liq:{ high:'高', mid:'中', low:'低', na:'不知道' }, roof:{ yes:'有', no:'沒有', na:'不確定' }, balc:{ yes:'有', no:'沒有', na:'不確定' },
+  wall:{ thick:'有，打掉磚牆或混凝土牆', thin:'有，只拆輕隔間', no:'沒有', na:'不確定' },
+  obs:{ none:'看起來正常', marble:'彈珠會自己滾向同一邊', door:'門會自己開或關', visible:'肉眼就看得出歪' },
+  where:{ col:'柱子', beam:'梁', lwall:'外牆、樓梯間的厚牆', pwall:'一般隔間牆', slab:'天花板、樓板', na:'不確定' },
+  width:{ hair:'像頭髮（小於約 0.3 公釐）', mid:'名片插得進（約 0.3–0.8 公釐）', wide:'悠遊卡插得進或更寬（約 0.8 公釐以上）' },
+  spall:{ yes:'有', no:'沒有' }, rebar:{ yes:'看得到', no:'看不到' }
+};
+const L = (k) => st[k] ? LBL[k][st[k]] : '未填';
+function buildReport(){
+  renderResult();
+  const { lv, el } = lastResult;
+  if (lv < 0){ $('#report').innerHTML = '<h1>住宅單棟自我初篩報告</h1><p>資料不足，還不能判斷：傾斜、裂縫、屋齡都還沒填。</p>'; return; }
+  const now = new Date();
+  const lists = el.querySelectorAll('.body ul');
+  const why = el.querySelector('.body > div:nth-child(2)');
+  const pics = [];
+  if (photo && analysis){
+    const keep = viewMode;
+    viewMode = 'orig'; draw(); pics.push(['原始照片', $('#cv').toDataURL('image/jpeg', 0.85)]);
+    viewMode = 'mark'; draw(); pics.push(['自動標出的裂縫（黃色）', $('#cv').toDataURL('image/jpeg', 0.85)]);
+    viewMode = keep; draw();
+  }
+  const a = analysis && analysis.conf !== 'none' ? analysis.p : null;
+  const tiltRows = st.tilts.length
+    ? st.tilts.map(t => `<tr><td>${escapeHtml(t.label)}</td><td>${t.deg.toFixed(2)} 度</td><td>${slopeTxt(t.deg)}</td><td>${['正常','輕微','超過 1/200','超過 1/40'][tiltBand(t.deg)]}</td></tr>`).join('')
+    : '<tr><td colspan="4">沒有量測紀錄</td></tr>';
+  $('#report').innerHTML = `
+    <div class="rhead"><div><div class="sm">危老檢查你我他</div><h1>住宅單棟自我初篩報告</h1></div><div class="sm">${now.toLocaleDateString('zh-TW')} ${now.toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'})}</div></div>
+    ${st.addr ? `<p style="margin:8px 0 0"><b>地址／大樓：</b>${escapeHtml(st.addr)}</p>` : ''}
+    <div class="rlv rl${lv}"><b>${'ABCD'[lv]} 級</b><div><div style="font-weight:900;font-size:13pt">${LV[lv].t}</div><div>${LV[lv].s}</div></div></div>
+    <section><h2>判斷依據</h2>${why ? why.innerHTML.replace(/<h3>.*?<\/h3>/, '') : ''}</section>
+    <section><h2>房子基本資料</h2><table>
+      <tr><th>完工年份</th><td>${st.year ? '民國 ' + st.year + ' 年（西元 ' + (st.year + 1911) + ' 年）' : '未填'}</td></tr>
+      <tr><th>結構</th><td>${L('struct')}</td></tr><tr><th>一樓牆少（軟腳）</th><td>${L('soft')}</td></tr>
+      <tr><th>土壤液化潛勢</th><td>${L('liq')}</td></tr><tr><th>頂樓加蓋</th><td>${L('roof')}</td></tr><tr><th>陽台外推</th><td>${L('balc')}</td></tr><tr><th>打掉過牆</th><td>${L('wall')}</td></tr></table></section>
+    <section><h2>傾斜量測</h2><table><tr><th style="width:auto">量測</th><th style="width:auto">角度</th><th style="width:auto">斜率</th><th style="width:auto">判斷</th></tr>${tiltRows}</table>
+      ${st.obs ? `<p style="margin:6px 0 0">觀察：${L('obs')}</p>` : ''}
+      <p class="sm" style="margin:4px 0 0">以手機方向感測器或水平儀 App 量測，誤差約零點幾度。門檻參考震後建築物緊急評估常用的 1/200 與 1/40。</p></section>
+    <section><h2>裂縫</h2><table>
+      <tr><th>位置</th><td>${L('where')}</td></tr><tr><th>走向</th><td>${st.dir ? dirName[st.dir] : '未填'}</td></tr>
+      <tr><th>寬度</th><td>${L('width')}</td></tr><tr><th>水泥剝落</th><td>${L('spall')}</td></tr><tr><th>看得到鋼筋</th><td>${L('rebar')}</td></tr>
+      ${a ? `<tr><th>自動辨識</th><td>線條方向：橫 ${(a.h*100).toFixed(0)}%、直 ${(a.v*100).toFixed(0)}%、斜 ${((a.d1+a.d2)*100).toFixed(0)}%；判讀為${dirName[analysis.dir] || '不確定'}</td></tr>` : ''}
+      ${st.ai && st.ai.summary ? `<tr><th>Claude 判讀</th><td>${escapeHtml(st.ai.summary)}</td></tr>` : ''}
+      </table>
+      ${pics.length ? `<div class="pics" style="margin-top:8px">${pics.map(([t, u]) => `<figure style="margin:0"><img src="${u}" alt="${t}"><figcaption class="sm">${t}</figcaption></figure>`).join('')}</div>` : ''}</section>
+    <section><h2>建議接下來</h2>${lists.length ? '<ul>' + lists[lists.length - 1].innerHTML + '</ul>' : ''}</section>
+    <p class="sm" style="margin-top:14px;border-top:1px solid #000;padding-top:6px">本報告由住戶使用「危老檢查你我他」單棟初篩網頁自行填寫與量測產生，只能當提醒，不能取代土木、結構技師或建築師的耐震能力評估。</p>`;
+}
+$('#addr').oninput = e => { st.addr = e.target.value.trim().slice(0, 120); save(); };
+$('#print').onclick = () => {
+  buildReport();
+  try { window.print(); } catch {}
+  if (inFrame) $('#printHint').innerHTML = '<b>沒有跳出列印畫面？</b>嵌在預覽視窗裡的頁面可能不能列印，請先用瀏覽器直接開這一頁（傾斜那一步的「在瀏覽器開啟這一頁」），填的內容會跟著帶過去。';
+};
+window.addEventListener('beforeprint', buildReport);
+$('#restart').onclick = async () => { if (!confirm('要清掉這支手機上存的所有填寫內容（含照片和地址），重新開始嗎？')) return; try { localStorage.removeItem(KEY); } catch {} if (cloud) await cloud.delete().catch(() => {}); location.replace(location.href.split('#')[0]); };
+
+/* ---------- 草稿自動保存 ----------
+   兩層：瀏覽器儲存（GitHub Pages 用），加上在 Claude 裡打開時存進這個 Artifact 的個人資料區
+   （只有本人看得到）。嵌入的預覽頁面，手機瀏覽器常常不讓它長期保存瀏覽器儲存，所以要第二層。 */
+let cloud = null, cloudT = null, loadedAt = 0;
+function draft(withPhoto){ return { v:1, at:Date.now(), step:cur, st, photo: withPhoto ? photoData : null }; }
+function save(){
+  if (restoringNow) return;
+  clearTimeout(saveT);
+  saveT = setTimeout(() => {
+    try { localStorage.setItem(KEY, JSON.stringify(draft(true))); }
+    catch { try { localStorage.setItem(KEY, JSON.stringify(draft(false))); } catch {} }
+  }, 300);
+  if (cloud){
+    clearTimeout(cloudT);
+    cloudT = setTimeout(() => {
+      const d = draft(true); if (d.photo && d.photo.length > 200000) d.photo = null;
+      cloud.set(JSON.parse(JSON.stringify({ ...d, photo: d.photo || '' }))).catch(() => {});
+    }, 1200);
+  }
+}
+async function initCloud(){
+  if (!window.claude || !claude.use) return;
+  try {
+    const [db, user] = await Promise.all([claude.use('db'), claude.use('user')]);
+    if (!db || !user) return;
+    const id = await user.id(); if (!id) return;
+    const ref = db.doc('data/users/' + id + '/drafts/current');
+    const snap = await ref.get();
+    cloud = ref;
+    const d = snap.exists ? snap.data() : null;
+    // 雲端那份比較新（或這次瀏覽器儲存是空的）才拿來用
+    if (d && d.v === 1 && d.st && (d.at || 0) > loadedAt) applyDraft(d, 'cloud');
+    else save();
+  } catch {}
+}
+function restore(){
+  let d = null, fromUrl = false;
+  const m = location.hash.match(/^#d=(.+)$/);
+  if (m){ try { d = JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(m[1]))))); fromUrl = true; } catch {} history.replaceState(null, '', location.href.split('#')[0]); }
+  if (!d){ try { d = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch {} }
+  if (!d || d.v !== 1 || !d.st) return;
+  applyDraft(d, fromUrl ? 'url' : 'local');
+}
+function applyDraft(d, source){
+  const fromUrl = source === 'url';
+  // 草稿超過 7 天就不再帶入，避免共用的手機、電腦被下一個人看到
+  if (!fromUrl && Date.now() - (d.at || 0) > 7 * 864e5){ try { localStorage.removeItem(KEY); } catch {} if (source === 'cloud' && cloud) cloud.delete().catch(() => {}); return; }
+  loadedAt = d.at || 0;
+  restoringNow = true;
+  const s = d.st;
+  if (s.year){ st.year = s.year; $('#year').value = s.year; }
+  if (typeof s.addr === 'string'){ st.addr = s.addr.slice(0, 120); $('#addr').value = st.addr; }
+  ['struct','soft','liq','roof','balc','wall','obs','where','dir','width','spall','rebar'].forEach(k => { if (s[k]) setOpt(k, s[k]); });
+  st.tilts = Array.isArray(s.tilts) ? s.tilts.filter(t => t && typeof t.deg === 'number').map(t => ({ mode:String(t.mode), deg:t.deg, label:String(t.label), cal:t.cal === true })) : [];
+  renderMeas();
+  st.auto = s.auto || null; st.ai = s.ai || null;
+  if (d.photo && /^data:image\/jpeg;base64,/.test(d.photo)){ photoData = d.photo; loadPhoto(d.photo, true); }
+  if (st.ai && typeof st.ai === 'object') showAi(st.ai);
+  restoringNow = false;
+  const filled = st.year || st.struct || st.tilts.length || st.dir || st.width || photoData;
+  if (filled){
+    const b = $('#restored'); b.hidden = false;
+    $('#restoredTxt').textContent = fromUrl ? '已帶入你剛才填的內容（照片要重新選一次）。' : `已恢復你上次填到一半的內容（${new Date(d.at).toLocaleString('zh-TW', {month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit'})}）。`;
+    go(Math.min(3, Math.max(0, d.step | 0)));
+  }
+  save();
+}
+$('#restoredClear').onclick = () => $('#restart').click();
+restore();
+// 地圖頁會帶 ?liq=high|mid|low&addr=… 過來
+(() => {
+  const q = new URLSearchParams(location.search);
+  const liq = q.get('liq'); if (['high','mid','low'].includes(liq)) setOpt('liq', liq);
+  const ad = q.get('addr'); if (ad){ st.addr = ad.slice(0, 120); $('#addr').value = st.addr; save(); }
+})();
+initCloud();
+})();
+</script>
+</body>
+</html>

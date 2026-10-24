@@ -1,0 +1,332 @@
+// 危老檢查你我他：地址查詢＋3D 里分數＋可自訂疊圖
+// 底圖：config.js 有 Google 金鑰就用 Google 地圖（GoogleMapsOverlay），否則用 MapLibre＋OpenFreeMap（MapboxOverlay）。
+(() => {
+const CFG = Object.assign({googleMapsApiKey:'',googleMapId:''}, window.WEILAO_CONFIG||{});
+const qs = new URLSearchParams(location.search);
+if (qs.get('key')) CFG.googleMapsApiKey = qs.get('key');
+if (qs.get('mapId')) CFG.googleMapId = qs.get('mapId');
+if (qs.get('engine') === 'free') CFG.googleMapsApiKey = '';
+
+const $ = id => document.getElementById(id);
+const HOME = {lng:121.545, lat:25.075, zoom:11.2};
+const hex = h => [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pct = x => (x*100).toFixed(1)+'%';
+const store = {get(k,d){try{const v=localStorage.getItem('weilao:'+k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem('weilao:'+k,JSON.stringify(v))}catch(e){}}};
+
+// ---------- palettes ----------
+const PAL = {
+  score: {orange:['#fbe7d2','#f6bc85','#ef8d42','#e8650a','#a53d05'], blue:['#e4e8fb','#aab7f2','#7088e8','#3f5ad8','#1f2f86'], heat:['#fff3b0','#ffd23f','#f59a23','#d9480f','#141414']},
+  liq:   {blue:['#3f5ad8','#8a9cec','#d4dbf8'], orange:['#a53d05','#ef8d42','#fbd7b5'], ink:['#141414','#6b6b6b','#c9c9c9']},
+  old:   {violet:['#f1e9fb','#c9b0ee','#9a72de','#6d3fc6','#3f1f86'], green:['#e6f5e1','#a9dd9c','#5fbf5a','#2f8f3a','#145a22'], orange:['#fbe7d2','#f6bc85','#ef8d42','#e8650a','#a53d05']},
+  house: {ink:['#141414','#b9b2a6'], orange:['#e8650a','#c9c1b4'], blue:['#3f5ad8','#c9c1b4']},
+  fire:  {yellow:['#ffd23f'], red:['#e5322d'], blue:['#3f5ad8']}
+};
+const PALNAME={orange:'橘色',blue:'藍色',heat:'黃到黑',ink:'黑灰',violet:'紫色',green:'綠色',yellow:'黃色',red:'紅色'};
+const LAYERS = [
+  {k:'score', name:'危老分數（3D 柱）', tag:'A 版分數', on:true, op:.92, pal:'orange', desc:'每個里依分數升高，顏色越深分數越高。'},
+  {k:'liq', name:'土壤液化潛勢', tag:'真實', on:false, op:.55, pal:'blue', desc:'高／中／低潛勢範圍。'},
+  {k:'house', name:'逐棟屋齡（實價登錄）', tag:'真實', on:false, op:.85, pal:'ink', desc:'每點一棟有成交紀錄的建物。'},
+  {k:'old', name:'高齡人口比例', tag:'真實', on:false, op:.75, pal:'violet', desc:'65 歲以上人口比例，以里為單位。'},
+  {k:'fire', name:'火災搶救困難、長巷道', tag:'真實', on:false, op:.8, pal:'yellow', desc:'消防局列管清冊所在的里（清冊沒有座標，以里標示）。'}
+];
+const PRESETS = [
+  {id:'bal',label:'均衡',w:{liq:40,old:30,house:30}},
+  {id:'dis',label:'防災優先',w:{liq:50,old:20,house:30}},
+  {id:'eld',label:'照顧高齡',w:{liq:30,old:50,house:20}}
+];
+const st = store.get('layers', {});
+const L = Object.fromEntries(LAYERS.map(l=>[l.k,{...l,...(st[l.k]||{})}]));
+let preset = store.get('preset','bal');
+let houseOldOnly = store.get('houseOldOnly', true);
+let colH = store.get('colH', 1);
+let is3d = true, zoomNow = HOME.zoom;
+// 拉近時把柱子壓低，才不會擋住街道和其他疊圖
+const elevK = () => Math.min(1, Math.pow(2, (11.6 - zoomNow) * 0.9));
+
+// ---------- data ----------
+let V=[], LIQ=[], HOUSES=null, MAT=[], ADDR=null;
+let sel=null, pin=null, N=0;
+const load = u => fetch(u).then(r=>{if(!r.ok)throw new Error(u+' '+r.status);return r.json()});
+
+function bbox(rings){let b=[180,90,-180,-90];for(const r of rings)for(const[x,y]of r){if(x<b[0])b[0]=x;if(y<b[1])b[1]=y;if(x>b[2])b[2]=x;if(y>b[3])b[3]=y}return b}
+const inRing=(x,y,r)=>{let c=false;for(let i=0,j=r.length-1;i<r.length;j=i++){const[xi,yi]=r[i],[xj,yj]=r[j];if((yi>y)!==(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)c=!c}return c};
+const inPoly=(x,y,rings)=>{let c=false;for(const r of rings)if(inRing(x,y,r))c=!c;return c};
+const findV=(x,y)=>V.find(v=>x>=v.b[0]&&x<=v.b[2]&&y>=v.b[1]&&y<=v.b[3]&&inPoly(x,y,v.rings));
+
+function weights(){return PRESETS.find(p=>p.id===preset).w}
+function rescore(){const w=weights(),t=w.liq+w.old+w.house;
+  for(const v of V){v.pt=[100*w.liq/t*v.x[0],100*w.old/t*v.x[1],100*w.house/t*v.x[2]];v.s=Math.round(v.pt[0]+v.pt[1]+v.pt[2])}
+  [...V].sort((a,b)=>b.s-a.s||b.L-a.L||b.p0-a.p0).forEach((v,i)=>v.r=i+1);
+  $('wlabel').textContent=`液化 ${w.liq}／高齡 ${w.old}／老屋 ${w.house}`;
+  $('wdesc').textContent=`權重：液化面積 ${w.liq}、高齡人口 ${w.old}、老屋比例 ${w.house}。換權重後排名會重算。`}
+
+// ---------- layers ----------
+const ramp = (arr,t) => hex(arr[Math.max(0,Math.min(arr.length-1,Math.floor(t*arr.length)))]);
+const A = op => Math.round(op*255);
+let ver = 0;
+function buildLayers(){
+  const D = deck, out = [];
+  if (!V.length) return out;
+  const selCode = sel && sel.code;
+  // 里界底線
+  out.push(new D.PolygonLayer({id:'outline',data:V,getPolygon:v=>v.rings,filled:false,stroked:true,getLineColor:[20,20,20,90],lineWidthMinPixels:.6,pickable:false}));
+  if (L.old.on) out.push(new D.PolygonLayer({id:'old',data:V,getPolygon:v=>v.rings,stroked:false,
+    getFillColor:v=>[...ramp(PAL.old[L.old.pal],(v.p0-0.15)/0.25),A(L.old.op)],updateTriggers:{getFillColor:[L.old.pal,L.old.op]},pickable:true,onClick:clickV}));
+  if (L.liq.on) out.push(new D.PolygonLayer({id:'liq',data:LIQ,getPolygon:d=>d.poly,stroked:false,
+    getFillColor:d=>[...hex(PAL.liq[L.liq.pal][d.c-1]),A(L.liq.op*(d.c===1?1:d.c===2?.8:.6))],updateTriggers:{getFillColor:[L.liq.pal,L.liq.op]},pickable:true}));
+  if (L.fire.on) out.push(new D.PolygonLayer({id:'fire',data:V.filter(v=>v.fire.length),getPolygon:v=>v.rings,stroked:true,
+    getFillColor:[...hex(PAL.fire[L.fire.pal][0]),A(L.fire.op*.7)],getLineColor:[20,20,20,230],lineWidthMinPixels:2.5,
+    updateTriggers:{getFillColor:[L.fire.pal,L.fire.op]},pickable:true,onClick:clickV}));
+  if (L.score.on) out.push(new D.PolygonLayer({id:'score',data:V,getPolygon:v=>v.rings,extruded:is3d,wireframe:true,
+    getElevation:v=>Math.max(v.s,2)*14*colH,elevationScale:elevK(),
+    getFillColor:v=>v.code===selCode?[...hex('#ffd23f'),255]:[...ramp(PAL.score[L.score.pal],v.s/100),A(L.score.op)],
+    getLineColor:[20,20,20,160],lineWidthMinPixels:.8,stroked:!is3d,
+    material:{ambient:.55,diffuse:.55,shininess:8,specularColor:[40,40,40]},
+    updateTriggers:{getFillColor:[L.score.pal,L.score.op,selCode,ver],getElevation:[ver,colH]},
+    transitions:{getElevation:400},pickable:true,autoHighlight:true,highlightColor:[255,210,63,220],onClick:clickV}));
+  if (L.house.on && HOUSES) out.push(new D.ScatterplotLayer({id:'house',data:HOUSES.filter(h=>!houseOldOnly||h.age>=30),
+    getPosition:h=>[h.x,h.y,is3d&&L.score.on?0:0],getRadius:h=>h.age>=30?9:6,radiusMinPixels:1.4,radiusMaxPixels:7,
+    getFillColor:h=>[...hex(PAL.house[L.house.pal][h.age>=30?0:1]),A(L.house.op)],stroked:false,
+    updateTriggers:{getFillColor:[L.house.pal,L.house.op]},pickable:true,parameters:{depthCompare:'always'}}));
+  if (sel) out.push(new D.PolygonLayer({id:'sel',data:[sel],getPolygon:v=>v.rings,filled:false,stroked:true,getLineColor:[20,20,20,255],lineWidthMinPixels:4,
+    getElevation:0,parameters:{depthCompare:'always'}}));
+  if (pin) out.push(new D.ScatterplotLayer({id:'pin',data:[pin],getPosition:p=>p,getRadius:1,radiusUnits:'pixels',radiusMinPixels:10,
+    getFillColor:hex('#e8650a'),stroked:true,getLineColor:[20,20,20],lineWidthMinPixels:3,parameters:{depthCompare:'always'}}));
+  return out;
+}
+const TT_STYLE={background:'#ffffff',color:'#141414',border:'3px solid #141414',boxShadow:'4px 4px 0 #141414',borderRadius:'0',padding:'8px 10px',fontSize:'13px',fontFamily:'"Noto Sans TC",sans-serif',maxWidth:'260px'};
+function tooltip({object,layer}){
+  if(!object||!layer)return null;
+  let h='';
+  if(['score','old','fire'].includes(layer.id)){const v=object;
+    h=`<b style="font-weight:900;font-size:15px">${esc(v.d)} ${esc(v.n)}</b><br>分數 <b>${v.s}</b>・第 ${v.r} 名／${N}<br>65 歲以上 ${pct(v.p0)}・老屋 ${pct(v.h0)}`+(v.fire.length?`<br>救災列管 ${v.fire.length} 處`:'')}
+  else if(layer.id==='liq'){h=`<b style="font-weight:900">液化潛勢：${['高','中','低'][object.c-1]}</b>`}
+  else if(layer.id==='house'){const o=object;h=`<b style="font-weight:900">屋齡 ${o.age} 年</b>${o.fl?`・${o.fl} 層`:''}<br>${esc(MAT[o.m]||'')}`}
+  else return null;
+  return {html:h,style:TT_STYLE};
+}
+
+// ---------- map engines ----------
+let engine=null; // {setLayers, fly, setPitch, name}
+function refresh(){if(engine)engine.setLayers(buildLayers())}
+
+function recolorStyle(style){
+  const C={bg:'#f6efe0',water:'#a9b8f3',park:'#e7e3c4',build:'#ece2cf',road:'#ffffff',casing:'#141414',major:'#ffd23f',text:'#141414'};
+  for(const l of style.layers){const id=l.id.toLowerCase();l.paint=l.paint||{};
+    if(l.type==='background'){l.paint['background-color']=C.bg;continue}
+    if(l.type==='fill'){
+      if(/water|ocean|river|lake/.test(id))l.paint['fill-color']=C.water;
+      else if(/park|wood|grass|forest|landcover|landuse/.test(id))l.paint['fill-color']=C.park;
+      else if(/building/.test(id))l.paint['fill-color']=C.build;
+      else l.paint['fill-color']=C.bg;
+      delete l.paint['fill-pattern'];}
+    if(l.type==='fill-extrusion'){l.layout={...(l.layout||{}),visibility:'none'}}
+    if(l.type==='line'){
+      if(/water|river|stream/.test(id))l.paint['line-color']=C.water;
+      else if(/casing/.test(id))l.paint['line-color']=C.casing;
+      else if(/motorway|trunk|highway/.test(id))l.paint['line-color']=C.major;
+      else if(/road|street|path|bridge|tunnel|primary|secondary|tertiary|minor|service/.test(id))l.paint['line-color']=C.road;
+      else if(/boundary|admin/.test(id))l.paint['line-color']='#e8650a';
+      else if(/rail|transit/.test(id))l.paint['line-color']='#8c857c';}
+    if(l.type==='symbol'){
+      if(l.layout&&l.layout['text-field'])l.layout['text-field']=['coalesce',['get','name:zh-Hant'],['get','name:zh'],['get','name']];
+      l.paint['text-color']=C.text;l.paint['text-halo-color']='#ffffff';l.paint['text-halo-width']=1.6;
+      if(/poi/.test(id))l.layout={...(l.layout||{}),visibility:'none'};}
+  }
+  return style;
+}
+async function startFree(){
+  let style;
+  try{const s=await load('https://tiles.openfreemap.org/styles/positron');style=recolorStyle(s);$('engine').textContent='底圖：OpenFreeMap'}
+  catch(e){style={version:8,sources:{},layers:[{id:'bg',type:'background',paint:{'background-color':'#f3ead8'}}]};$('engine').textContent='底圖：離線色塊'}
+  const map=new maplibregl.Map({container:'map',style,cooperativeGestures:matchMedia('(pointer:coarse)').matches,center:[HOME.lng,HOME.lat],zoom:HOME.zoom,pitch:50,bearing:-12,maxPitch:70,attributionControl:{compact:true}});
+  map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'top-right');
+  const ov=new deck.MapboxOverlay({interleaved:true,layers:[],getTooltip:tooltip});
+  map.addControl(ov);
+  map.on('zoomend',()=>{const z=map.getZoom();if(Math.abs(z-zoomNow)>.2){zoomNow=z;refresh()}});
+  map.on('click',e=>{ if(!ov.pickObject({x:e.point.x,y:e.point.y,radius:2})){const v=findV(e.lngLat.lng,e.lngLat.lat);if(v)selectV(v,null,'')} });
+  engine={name:'free',setLayers:l=>ov.setProps({layers:l}),
+    fly:(lng,lat,zoom)=>map.flyTo({center:[lng,lat],zoom,pitch:is3d?55:0,duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:1400,essential:true}),
+    setPitch:p=>map.easeTo({pitch:p,bearing:p?-12:0,duration:600})};
+}
+function startGoogle(){return new Promise((res,rej)=>{
+  window.__gmInit=()=>{try{
+    const vec=!!CFG.googleMapId;
+    const opt={center:{lat:HOME.lat,lng:HOME.lng},zoom:HOME.zoom+.3,disableDefaultUI:true,zoomControl:true,rotateControl:true,clickableIcons:false,backgroundColor:'#f3ead8',gestureHandling:matchMedia('(pointer:coarse)').matches?'cooperative':'greedy'};
+    if(vec){opt.mapId=CFG.googleMapId;opt.tilt=45;opt.heading=-12;opt.renderingType='VECTOR'}else{opt.styles=GSTYLE}
+    const el=$('map');el.classList.add('gm');
+    const map=new google.maps.Map(el,opt);
+    const ov=new deck.GoogleMapsOverlay({interleaved:vec,layers:[],getTooltip:tooltip});
+    ov.setMap(map);
+    map.addListener('zoom_changed',()=>{const z=map.getZoom()-.3;if(Math.abs(z-zoomNow)>.2){zoomNow=z;refresh()}});
+    map.addListener('click',e=>{const v=findV(e.latLng.lng(),e.latLng.lat());if(v)selectV(v,null,'')});
+    engine={name:'google',setLayers:l=>ov.setProps({layers:l}),
+      fly:(lng,lat,zoom)=>{map.moveCamera({center:{lat,lng},zoom:zoom+.3,tilt:vec&&is3d?55:0,heading:vec&&is3d?-12:0})},
+      setPitch:p=>{if(vec){map.setTilt(p?55:0);map.setHeading(p?-12:0)}}};
+    $('engine').textContent=vec?'底圖：Google 地圖（3D）':'底圖：Google 地圖（需 Map ID 才能 3D）';
+    res();
+  }catch(e){rej(e)}};
+  const s=document.createElement('script');
+  s.src='https://maps.googleapis.com/maps/api/js?key='+encodeURIComponent(CFG.googleMapsApiKey)+'&v=weekly&callback=__gmInit&language=zh-TW&region=TW';
+  s.async=true;s.onerror=()=>rej(new Error('Google Maps 載入失敗'));
+  window.gm_authFailure=()=>{$('engine').textContent='Google 金鑰無效，改用免費底圖';};
+  document.head.appendChild(s);
+})}
+// 沒有 Map ID 時給 Google 點陣地圖用的樣式（有 Map ID 時請在 Cloud Console 設定雲端樣式）
+const GSTYLE=[
+ {featureType:'all',elementType:'labels.icon',stylers:[{visibility:'off'}]},
+ {featureType:'poi',stylers:[{visibility:'off'}]},
+ {featureType:'transit',stylers:[{visibility:'off'}]},
+ {featureType:'landscape',elementType:'geometry',stylers:[{color:'#f6efe0'}]},
+ {featureType:'water',elementType:'geometry',stylers:[{color:'#a9b8f3'}]},
+ {featureType:'road',elementType:'geometry.fill',stylers:[{color:'#ffffff'}]},
+ {featureType:'road',elementType:'geometry.stroke',stylers:[{color:'#141414'},{weight:.8}]},
+ {featureType:'road.highway',elementType:'geometry.fill',stylers:[{color:'#ffd23f'}]},
+ {featureType:'administrative',elementType:'geometry.stroke',stylers:[{color:'#e8650a'},{weight:1.5}]},
+ {elementType:'labels.text.fill',stylers:[{color:'#141414'}]},
+ {elementType:'labels.text.stroke',stylers:[{color:'#ffffff'},{weight:3}]}
+];
+
+// ---------- selection & result ----------
+function clickV(info){if(info&&info.object){selectV(info.object,null,'');return true}}
+const level=s=>s>=70?'優先關注':s>=50?'建議留意':s>=30?'中等':'相對較低';
+const liqAt=(x,y)=>{let c=0;for(const d of LIQ){if(inPoly(x,y,d.poly)&&(!c||d.c<c))c=d.c}return c};
+function near(x,y,m){if(!HOUSES)return null;const kx=Math.cos(y*Math.PI/180)*111320,ky=110540;let n=0,o=0,brick=0,max=0;
+  for(const h of HOUSES){const dx=(h.x-x)*kx,dy=(h.y-y)*ky;if(dx*dx+dy*dy<=m*m){n++;if(h.age>=30)o++;if(/磚/.test(MAT[h.m]||''))brick++;if(h.age>max)max=h.age}}
+  return{n,o,brick,max}}
+function selectV(v,xy,addr,warn){sel=v;pin=xy;render(v,addr,xy,warn);refresh();
+  if(addr&&matchMedia('(max-width:1000px)').matches)document.querySelector('.result').scrollIntoView({behavior:'smooth',block:'start'});
+  const c=xy||[(v.b[0]+v.b[2])/2,(v.b[1]+v.b[3])/2];if(engine)engine.fly(c[0],c[1],xy?14.3:13.4)}
+let lastWarn='';
+function render(v,addr,xy,warn){lastWarn=warn||'';
+  $('coord').textContent=xy?xy[1].toFixed(5)+', '+xy[0].toFixed(5):'—';
+  const w=weights();
+  const parts=[['液化面積',v.pt[0],w.liq,'高潛勢 '+pct(v.hi)+'・中潛勢 '+pct(v.mid)],['高齡人口',v.pt[1],w.old,'65 歲以上 '+pct(v.p0)],['老屋比例',v.pt[2],w.house,'30 年以上 '+pct(v.h0)+'・實價登錄推估，實際可能更高'+(v.hd?'（這一里成交樣本少，用區平均）':`（成交樣本 ${v.hn} 棟）`)]];
+  const t=w.liq+w.old+w.house;
+  let nb='';
+  if(xy){const r=near(xy[0],xy[1],150);if(r&&r.n)nb=`<div class="box"><h3>這個地址方圓 150 公尺</h3><p>實價登錄有 ${r.n} 棟成交建物，其中 <b>${r.o} 棟屋齡 30 年以上</b>（${Math.round(r.o/r.n*100)}%）${r.brick?`，${r.brick} 棟磚造或加強磚造`:''}；最老 ${r.max} 年。</p></div>`;
+    else if(r)nb=`<div class="box"><h3>這個地址方圓 150 公尺</h3><p>實價登錄沒有成交紀錄。</p></div>`}
+  const fire=v.fire.length?`<div class="box"><h3>消防局列管 ${v.fire.length} 處</h3><ul>${v.fire.slice(0,5).map(f=>`<li>${esc(f[0])}（${esc(f[1])}${f[2]?'・'+esc(f[2]):''}）</li>`).join('')}${v.fire.length>5?`<li>另有 ${v.fire.length-5} 處</li>`:''}</ul></div>`:'';
+  let lq='',lqv='';
+  if(xy){const c=liqAt(xy[0],xy[1]);lqv=['','high','mid','low'][c];lq=`<p class="liqline">這個地址：${c?`<b>液化${['高','中','低'][c-1]}潛勢</b>`:'不在液化潛勢圖範圍內（多為山坡地）'}</p>`}
+  const warnBox=warn?`<div class="box warn"><h3>注意</h3><p>${esc(warn)}</p></div>`:'';
+  const ck='check.html'+(xy?'?'+new URLSearchParams({...(lqv?{liq:lqv}:{}),addr:addr||''}).toString():'');
+  $('res').innerHTML=`${warnBox}<div><p class="addr">${esc(addr||'在地圖上點選')}</p><h2 class="vname">${esc(v.d)} ${esc(v.n)}</h2></div>${lq}
+  <div class="tiles"><div class="tile"><div class="k">危老分數</div><div class="v">${v.s}<small>/ 100</small></div></div>
+  <div class="tile"><div class="k">全市排名</div><div class="v">${v.r}<small>/ ${N}</small></div></div></div>
+  <div><span class="lvl">里的風險：${level(v.s)}</span>${v.s<30?'<span class="lvlnote">不代表你家這棟安全</span>':''}</div>
+  <div class="parts">${parts.map(([k,p,m,raw])=>{const mx=100*m/t;return `<div><div class="prow"><span>${k}</span><div class="track"><div class="bfill${p<=0.05?' z':''}" style="width:${mx?(p/mx*100).toFixed(1):0}%"></div></div><span class="n">${p.toFixed(1)}/${Math.round(mx)}</span></div><p class="raw">${raw}</p></div>`}).join('')}</div>
+  ${nb}${fire}
+  <a class="checklink" href="${esc(ck)}">自己檢查單棟 →</a>
+  <p class="note">分數是這一里的平均狀況，不是這一棟的耐震結果。單棟要看建物結構與耐震評估。</p>`;
+}
+
+// ---------- legend & layer panel ----------
+function legend(){const g=[];
+  if(L.score.on)g.push(`<span class="g">分數 0<span class="ramp">${PAL.score[L.score.pal].map(c=>`<i style="background:${c}"></i>`).join('')}</span>100</span>`);
+  if(L.liq.on)g.push(`<span class="g">液化 ${['高','中','低'].map((n,i)=>`<span class="sw" style="background:${PAL.liq[L.liq.pal][i]}"></span>${n}`).join(' ')}</span>`);
+  if(L.house.on)g.push(`<span class="g"><span class="sw" style="background:${PAL.house[L.house.pal][0]};border-radius:50%"></span>30 年以上${houseOldOnly?'':` <span class="sw" style="background:${PAL.house[L.house.pal][1]};border-radius:50%"></span>未滿 30 年`}</span>`);
+  if(L.old.on)g.push(`<span class="g">高齡 15%<span class="ramp">${PAL.old[L.old.pal].map(c=>`<i style="background:${c}"></i>`).join('')}</span>40%</span>`);
+  if(L.fire.on)g.push(`<span class="g"><span class="sw" style="background:${PAL.fire[L.fire.pal][0]}"></span>有救災列管的里</span>`);
+  $('legend').innerHTML=g.join('')||'<span>沒有開啟的疊圖</span>'}
+function save(){store.set('layers',Object.fromEntries(LAYERS.map(l=>[l.k,{on:L[l.k].on,op:L[l.k].op,pal:L[l.k].pal}])))}
+function panel(){
+  $('presets').innerHTML=PRESETS.map(p=>`<button data-p="${p.id}" aria-pressed="${p.id===preset}">${p.label}</button>`).join('');
+  $('laylist').innerHTML=LAYERS.map(({k})=>{const l=L[k];return `<div class="lay" data-k="${k}" ${l.on?'':'data-off'}>
+    <div class="lh"><label><input type="checkbox" id="on-${k}" ${l.on?'checked':''}>${l.name}</label><span class="tag ${l.tag==='真實'?'real':''}">${l.tag}</span></div>
+    <p class="sub">${l.desc}</p>
+    <div class="lb"><label for="op-${k}">透明度</label><input type="range" id="op-${k}" min="0.1" max="1" step="0.05" value="${l.op}">
+    ${k==='score'?`<label for="colh">柱高</label><input type="range" id="colh" min="0.3" max="3" step="0.1" value="${colH}">`:''}
+    <span>配色</span><div class="pals">${Object.entries(PAL[k]).map(([pk,arr])=>`<button class="pal" data-pal="${pk}" aria-label="${PALNAME[pk]||pk}配色" aria-pressed="${pk===l.pal}">${arr.map(c=>`<i style="background:${c}"></i>`).join('')}</button>`).join('')}</div></div>
+    ${k==='house'?`<label class="chk"><input type="checkbox" id="oldonly" ${houseOldOnly?'checked':''}>只顯示 30 年以上</label>`:''}
+  </div>`}).join('');
+}
+$('laylist').addEventListener('input',e=>{const lay=e.target.closest('.lay');if(!lay)return;const k=lay.dataset.k;
+  if(e.target.id==='on-'+k){L[k].on=e.target.checked;e.target.checked?lay.removeAttribute('data-off'):lay.setAttribute('data-off','')}
+  else if(e.target.id==='op-'+k)L[k].op=+e.target.value;
+  else if(e.target.id==='colh'){colH=+e.target.value;store.set('colH',colH)}
+  else if(e.target.id==='oldonly'){houseOldOnly=e.target.checked;store.set('houseOldOnly',houseOldOnly)}
+  save();legend();refresh()});
+$('laylist').addEventListener('click',e=>{const b=e.target.closest('.pal');if(!b)return;const k=b.closest('.lay').dataset.k;L[k].pal=b.dataset.pal;
+  b.parentElement.querySelectorAll('.pal').forEach(x=>x.setAttribute('aria-pressed',x===b));save();legend();refresh()});
+$('presets').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;preset=b.dataset.p;store.set('preset',preset);
+  $('presets').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));rescore();ver++;if(sel)render(sel,lastAddr,pin,lastWarn);refresh()});
+$('v3').onclick=()=>{is3d=true;$('v3').setAttribute('aria-pressed','true');$('v2').setAttribute('aria-pressed','false');engine&&engine.setPitch(55);refresh()};
+$('v2').onclick=()=>{is3d=false;$('v2').setAttribute('aria-pressed','true');$('v3').setAttribute('aria-pressed','false');engine&&engine.setPitch(0);refresh()};
+$('home').onclick=()=>engine&&engine.fly(HOME.lng,HOME.lat,HOME.zoom);
+
+// ---------- address search (內政部門牌位置資料) ----------
+const CN='〇一二三四五六七八九';
+function cnNum(n){n=+n;if(n<=10)return n===10?'十':CN[n];if(n<20)return '十'+(n%10?CN[n%10]:'');return CN[Math.floor(n/10)]+'十'+(n%10?CN[n%10]:'')}
+function norm(s){return s.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/台/g,'臺').replace(/\s+/g,'')
+  .replace(/^臺北市/,'').replace(/(\d+)樓.*$/,'').replace(/(\d+)段/g,(m,n)=>cnNum(n)+'段').replace(/-/g,'之')}
+function parseQ(raw){let s=norm(raw),dist='';const m=s.match(/^(..區)/);if(m&&ADDR.d.includes(m[1])){dist=m[1];s=s.slice(3)}
+  const road=(s.match(/^[^0-9]+/)||[''])[0];let rest=s.slice(road.length);
+  const lane=[];let mm;
+  while((mm=rest.match(/^(\d+)(巷|弄|衖)/))){lane.push(mm[0]);rest=rest.slice(mm[0].length)}
+  const num=(rest.match(/^(\d+(?:之\d*)?)號?/)||[])[1]||'';
+  return{dist,road,lane:lane.join(''),num}}
+const numCache=new Map();
+function nums(i){if(numCache.has(i))return numCache.get(i);const s=ADDR.s[i],p=s[5].split('|'),o=[];
+  for(let j=0;j<p.length;j+=3)o.push([p[j],s[3]+(+p[j+1])/1e5,s[4]+(+p[j+2])/1e5]);numCache.set(i,o);return o}
+const label=i=>{const s=ADDR.s[i];return '臺北市'+ADDR.d[s[0]]+s[1]+s[2]};
+function suggest(raw){if(!ADDR)return[];const q=parseQ(raw);if(!q.road&&!q.dist)return[];
+  const cand=[];
+  for(let i=0;i<ADDR.s.length;i++){const s=ADDR.s[i];
+    if(q.dist&&ADDR.d[s[0]]!==q.dist)continue;
+    if(q.road&&!s[1].includes(q.road))continue;
+    if(q.lane&&!s[2].startsWith(q.lane))continue;
+    cand.push(i)}
+  const rank=i=>{const s=ADDR.s[i];return (s[1].startsWith(q.road)?0:2)+(s[2]===q.lane?0:1)};
+  cand.sort((a,b)=>rank(a)-rank(b)||ADDR.s[a][2].length-ADDR.s[b][2].length);
+  const out=[];
+  if(q.num){
+    for(const i of cand){if(q.lane&&ADDR.s[i][2]!==q.lane)continue;if(!q.lane&&ADDR.s[i][2]!=='')continue;
+      for(const [n,x,y] of nums(i)){if(n===q.num||n.startsWith(q.num.replace(/之$/,'')))out.push({t:'a',main:label(i)+n+'號',sub:'',x,y,ex:n===q.num});}
+      if(out.length>40)break}
+    out.sort((a,b)=>b.ex-a.ex);
+    if(!out.length)for(const i of cand.slice(0,6))out.push(streetItem(i,'找不到這個門牌號，先到這條路'));
+  }else{
+    const seen=new Set();
+    for(const i of cand){const key=ADDR.s[i][0]+ADDR.s[i][1]+ADDR.s[i][2];if(seen.has(key))continue;seen.add(key);out.push(streetItem(i));if(out.length>=8)break}
+  }
+  return out.slice(0,8)}
+function streetItem(i,sub){const a=nums(i),m=a[Math.floor(a.length/2)];return{t:'s',main:label(i),sub:sub||`${a.length} 個門牌・可再輸入門牌號`,x:m[1],y:m[2]}}
+
+const q=$('q'),list=$('list');let items=[],act=-1,lastAddr='';
+function hl(s,raw){const t=parseQ(raw).road;const i=t?s.indexOf(t):-1;return i<0?esc(s):esc(s.slice(0,i))+'<mark>'+esc(t)+'</mark>'+esc(s.slice(i+t.length))}
+function showList(){list.innerHTML=items.length?items.map((s,i)=>`<li role="option" id="o${i}" aria-selected="${i===act}" data-i="${i}"><span class="pin ${s.t==='s'?'st':''}"><i></i></span><span><b>${hl(s.main,q.value)}</b>${s.sub?`<small>${esc(s.sub)}</small>`:''}</span></li>`).join('')
+  :`<li class="empty">${ADDR?'找不到這個地址。請輸入臺北市的路名，例如「廣州街」。':'門牌資料還在載入，請稍等。'}</li>`;
+  list.hidden=false;q.setAttribute('aria-expanded','true');q.setAttribute('aria-activedescendant',act>=0?'o'+act:'')}
+function hide(){list.hidden=true;q.setAttribute('aria-expanded','false')}
+let tmr=0;
+q.addEventListener('input',()=>{$('clear').hidden=!q.value;clearTimeout(tmr);tmr=setTimeout(()=>{act=-1;items=suggest(q.value);q.value.trim()?showList():hide()},120)});
+q.addEventListener('focus',()=>{if(q.value.trim()&&items.length)showList()});
+q.addEventListener('keydown',e=>{if(list.hidden||!items.length)return;
+  if(e.key==='ArrowDown'){act=(act+1)%items.length;showList();e.preventDefault()}
+  else if(e.key==='ArrowUp'){act=(act-1+items.length)%items.length;showList();e.preventDefault()}
+  else if(e.key==='Escape')hide()});
+list.addEventListener('mousedown',e=>{const li=e.target.closest('li[data-i]');if(li){e.preventDefault();pick(items[+li.dataset.i])}});
+document.addEventListener('click',e=>{if(!e.target.closest('.search'))hide()});
+$('clear').addEventListener('click',()=>{q.value='';$('clear').hidden=true;hide();q.focus()});
+function pick(s){q.value=s.main+(s.t==='s'?'':'');hide();const v=findV(s.x,s.y);lastAddr=s.main;
+  if(s.t==='s'){q.focus();items=suggest(q.value);}
+  if(v)selectV(v,[s.x,s.y],s.main,s.t==='s'?'找不到這個門牌，以下是這條路段中間的里，可能不是你家。請輸入完整門牌號。':'');else{$('res').innerHTML='<p class="empty-res">這個地址不在 456 里的範圍內。</p>'}}
+$('f').addEventListener('submit',e=>{e.preventDefault();items=suggest(q.value);if(items.length)pick(items[Math.max(act,0)]);else showList()});
+
+// ---------- boot ----------
+panel();legend();
+const enginePromise=(CFG.googleMapsApiKey?startGoogle().catch(err=>{console.warn(err);return startFree()}):startFree()).catch(err=>{console.error(err);$('engine').textContent='地圖載入失敗'});
+Promise.all([load('data/villages.json'),load('data/liquefaction.json')]).then(([vs,lq])=>{
+  V=vs.map(a=>({code:a[0],d:a[1],n:a[2],x:[a[3],a[4],a[5]],hi:a[6],mid:a[7],p0:a[8],h0:a[9],hd:a[10],fire:a[11],rings:a[12],hn:a[13]||0,b:bbox(a[12]),L:a[6]+a[7]*.5}));
+  N=V.length;
+  LIQ=[];for(const[c,mp]of lq)for(const poly of mp)LIQ.push({c,poly}); // MultiPolygon → 每個 polygon 一筆
+  rescore();
+  return enginePromise}).then(()=>{refresh();$('loading').hidden=true;
+    const h=decodeURIComponent(location.hash.slice(1));if(h){q.value=h;items=suggest(h)}})
+  .catch(e=>{console.error(e);$('loading').textContent='資料載入失敗'});
+load('data/houses.json').then(d=>{MAT=d.mat;const p=d.p,o=[];for(let i=0;i<p.length;i+=5)o.push({x:p[i],y:p[i+1],age:p[i+2],fl:p[i+3],m:p[i+4]});HOUSES=o;if(L.house.on)refresh();if(sel)render(sel,lastAddr,pin,lastWarn)});
+load('data/addresses.json').then(d=>{ADDR=d;$('hint').textContent=`可查 ${d.s.length.toLocaleString()} 條路段巷弄、約 25 萬個門牌（內政部門牌位置資料）。`;
+  if(q.value){items=suggest(q.value);if(items.length)pick(items[0])}}).catch(()=>{$('hint').textContent='門牌資料載入失敗，請重新整理。'});
+})();
