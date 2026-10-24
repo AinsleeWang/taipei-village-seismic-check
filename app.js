@@ -26,7 +26,7 @@ const PALNAME={orange:'橘色',blue:'藍色',heat:'黃到黑',ink:'黑灰',viole
 const LAYERS = [
   {k:'score', name:'危老分數（3D 柱）', tag:'A 版分數', on:true, op:.92, pal:'orange', desc:'每個里依分數升高，顏色越深分數越高。'},
   {k:'liq', name:'土壤液化潛勢', tag:'真實', on:false, op:.55, pal:'blue', desc:'高／中／低潛勢範圍。'},
-  {k:'house', name:'逐棟屋齡（實價登錄成交樣本）', tag:'成交樣本', on:false, op:.85, pal:'ink', desc:'只有 2011–2026 年有成交紀錄的 62,570 棟，不是全部建物；屋齡用登錄的建築完成年，座標依門牌定位（第三方整理）。'},
+  {k:'house', name:'逐棟屋齡（實價登錄成交樣本）', tag:'成交樣本', on:false, op:.85, pal:'ink', desc:'只有 2011–2026 年有成交紀錄的建物，約占全市 28%，而且偏新，不是全部建物；屋齡用登錄的建築完成年，座標依門牌定位（第三方整理）。'},
   {k:'old', name:'高齡人口比例', tag:'真實', on:false, op:.75, pal:'violet', desc:'65 歲以上人口比例，以里為單位。'},
   {k:'fire', name:'火災搶救困難、長巷道', tag:'真實', on:false, op:.9, pal:'red', desc:'消防局列管的 185 處巷道。清冊只有路名，我們用門牌資料把每條巷道的門牌畫成點，大圓點是巷道位置。'}
 ];
@@ -336,7 +336,7 @@ Promise.all([load('data/villages.json'),load('data/liquefaction.json')]).then(([
     const h=decodeURIComponent(location.hash.slice(1));if(h){q.value=h;items=suggest(h)}})
   .catch(e=>{console.error(e);$('loading').textContent='資料載入失敗'});
 load('data/fire.json').then(d=>{FIRE=d;FIREPTS=d.flatMap(f=>f.pts.map(p=>({p,f})));if(L.fire.on)refresh()});
-load('data/houses.json').then(d=>{MAT=d.mat;const p=d.p,o=[];for(let i=0;i<p.length;i+=5)o.push({x:p[i],y:p[i+1],age:p[i+2],fl:p[i+3],m:p[i+4]});HOUSES=o;if(L.house.on)refresh();if(sel)render(sel,lastAddr,pin,lastWarn)});
+load('data/houses.json').then(d=>{MAT=d.mat;const p=d.p,o=[];for(let i=0;i<p.length;i+=5)if(p[i+2]<=96)o.push({x:p[i],y:p[i+1],age:p[i+2],fl:p[i+3],m:p[i+4]});HOUSES=o;if(L.house.on)refresh();if(sel)render(sel,lastAddr,pin,lastWarn)});
 load('data/addresses.json').then(d=>{ADDR=d;$('hint').textContent=`可查 ${d.s.length.toLocaleString()} 條路段巷弄、約 25 萬個門牌（內政部門牌位置資料）。`;
   if(q.value){items=suggest(q.value);if(items.length)pick(items[0])}}).catch(()=>{$('hint').textContent='門牌資料載入失敗，請重新整理。'});
 })();
