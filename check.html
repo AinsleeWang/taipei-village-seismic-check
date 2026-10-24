@@ -225,8 +225,8 @@ footer p{margin:0}
       <div class="help" id="sensorHelp" hidden></div>
       <ul class="meas" id="meas"></ul>
       <div class="done row" id="tiltDone" hidden><span>✓ 傾斜已經記下，這一步完成了。</span><button class="btn" data-go="2">下一步：拍裂縫 →</button><button class="btn w" id="addMore" style="padding:4px 12px;font-size:.85rem;box-shadow:none">另一個房間也想記</button></div>
-      <div class="q" id="manual" hidden>
-        <p class="sub"><b>或是先不用感測器：</b>用手機內建的「水平儀」（iPhone 在「測距儀」App 裡）量好填在下面，或選一個你觀察到的狀況。</p>
+      <div class="q" id="manual">
+        <p class="sub"><b>也可以自己輸入：</b>用手機內建的「水平儀」（iPhone 在「測距儀」App 裡）量好填在下面，或選一個你觀察到的狀況。</p>
         <div class="row"><input id="manDeg" type="text" inputmode="decimal" placeholder="度數，例如 -1"><button class="btn w" id="manAdd">記下</button></div>
         <div class="opts" data-k="obs"><button data-v="none">看起來正常</button><button data-v="marble">彈珠會自己滾向同一邊</button><button data-v="door">門會自己開或關</button><button data-v="visible">肉眼就看得出歪</button></div>
       </div>
@@ -479,12 +479,14 @@ function tiltDone(){
     if (!$('#manual').hidden){ $('#manual').hidden = true; manualTucked = true; }
     $('#start').hidden = true; $('#sensorMsg').textContent = '';
   } else {
-    $('#start').hidden = false;
+    $('#start').hidden = !isMobile;
     if (manualTucked){ $('#manual').hidden = false; manualTucked = false; }
   }
 }
+// 一開始就能自己輸入；電腦沒有感測器，直接收起「開始量」
+if (!isMobile){ $('#start').hidden = true; $('#sensorMsg').textContent = '電腦沒有傾斜感測器。可以用手機的水平儀 App 量好，把度數填在下面。'; }
 $('#addMore').onclick = () => {
-  $('#start').hidden = false;
+  $('#start').hidden = !isMobile;
   if (manualTucked || !listening){ $('#manual').hidden = false; manualTucked = false; $('#manDeg').focus(); }
 };
 
