@@ -74,7 +74,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--yellow);outline
 .mapcard{position:relative}
 #map{position:relative;height:min(72vh,720px);min-height:420px;background:#f3ead8}
 #map.gm{background:#f3ead8}
-.mapctl{position:absolute;left:12px;top:56px;z-index:4;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.mapbox{position:relative}
+.mapctl{position:absolute;left:12px;top:12px;z-index:4;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
 .seg{display:inline-flex;border:var(--bd);box-shadow:3px 3px 0 var(--ink);background:var(--card)}
 .seg button{font:inherit;font-weight:900;font-size:.85rem;border:0;background:transparent;padding:5px 12px;cursor:pointer}
 .seg button+button{border-left:var(--bd)}
@@ -133,7 +134,7 @@ details.layers[open]>summary{border-bottom:var(--bd)}
 #db .row{cursor:pointer}
 #db .row:hover rect:last-of-type{fill:rgba(255,210,63,.35)}
 .dbnote{margin:0;padding:8px 12px;border-top:var(--bd);font-size:.875rem;color:var(--muted)}
-.modebadge{position:absolute;right:56px;top:56px;z-index:4;background:#d62e1f;color:#fff;border:var(--bd);box-shadow:3px 3px 0 var(--ink);font-weight:900;padding:4px 12px}
+.modebadge{position:absolute;right:56px;top:12px;z-index:4;background:#d62e1f;color:#fff;border:var(--bd);box-shadow:3px 3px 0 var(--ink);font-weight:900;padding:4px 12px}
 .maptip{position:absolute;z-index:6;pointer-events:none;background:#fff;color:var(--ink);border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:8px 10px;font-size:13px;line-height:1.5;max-width:260px}
 .yearnote{margin:0;padding:8px 12px;border-top:var(--bd);background:#e4e8fb;font-size:.875rem}
 .yrline{margin:0;font-size:.875rem;font-weight:700;color:#e3e8ff}
@@ -266,6 +267,7 @@ footer a,.src a{color:inherit;text-decoration:underline;text-underline-offset:2p
     <div class="mapcol">
     <section class="card mapcard">
       <div class="cap"><span>危老分數地圖</span><small id="wlabel">權重：液化面積 40、高齡人口 30、老屋比例 30。換權重後排名會重算。</small></div>
+      <div class="mapbox">
       <div class="mapctl">
         <div class="seg" role="group" aria-label="視角"><button id="v3" aria-pressed="true">3D</button><button id="v2" aria-pressed="false">2D</button></div>
         <div class="seg"><button id="home" aria-pressed="false">全市</button></div>
@@ -274,6 +276,7 @@ footer a,.src a{color:inherit;text-decoration:underline;text-underline-offset:2p
       <div id="map"></div>
       <div class="modebadge" id="modebadge" hidden>現在看的是：2035 比現在多幾分</div>
       <div class="loading" id="loading">資料載入中</div>
+      </div>
       <p class="yearnote" id="yearnote" hidden><b>2035 推估：</b>把各里 115 年 9 月的單齡人口往後推 10 年，套用 10 年存活率，新生兒以 0 歲人數×0.95 估算，不計遷入遷出；全市 65 歲以上會從 24.9% 升到約 33.3%。老屋比例改用現在 20 年以上的比例（到 2035 年就滿 30 年）。液化不變。這是推估，不是預測。</p>
       <div class="chips" id="chips" role="group" aria-label="疊圖開關"></div>
       <div class="legend" id="legend"></div>
@@ -318,9 +321,9 @@ footer a,.src a{color:inherit;text-decoration:underline;text-underline-offset:2p
   </footer>
 </div>
 
-<script src="config.js?v=20261024l"></script>
+<script src="config.js?v=20261024m"></script>
 <script src="lib/deck.gl-9.1.14.min.js"></script>
 <script src="lib/maplibre-gl-4.7.1.js"></script>
-<script src="app.js?v=20261024l"></script>
+<script src="app.js?v=20261024m"></script>
 </body>
 </html>
