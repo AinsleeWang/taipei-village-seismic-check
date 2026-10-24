@@ -74,7 +74,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--yellow);outline
 .mapcard{position:relative}
 #map{position:relative;height:min(72vh,720px);min-height:420px;background:#f3ead8}
 #map.gm{background:#f3ead8}
-.mapctl{position:absolute;left:12px;top:56px;z-index:4;display:flex;flex-direction:column;gap:8px}
+.mapctl{position:absolute;left:12px;top:56px;z-index:4;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
 .seg{display:inline-flex;border:var(--bd);box-shadow:3px 3px 0 var(--ink);background:var(--card)}
 .seg button{font:inherit;font-weight:900;font-size:.85rem;border:0;background:transparent;padding:5px 12px;cursor:pointer}
 .seg button+button{border-left:var(--bd)}
@@ -181,7 +181,7 @@ details.layers[open]>summary{border-bottom:var(--bd)}
 .lay[data-off] .lb{opacity:.45}
 .sub{font-size:.875rem;color:var(--muted);margin:0}
 .wts{padding:10px 12px;display:grid;gap:8px;border-bottom:var(--bd)}
-.wts .seg{box-shadow:none;border-width:2px;flex-wrap:wrap}
+.wts .seg{box-shadow:none;border-width:2px;flex-wrap:wrap;justify-self:start}
 .wts .seg button{font-size:.8rem;padding:3px 10px}
 .wts .seg button+button{border-left:2px solid var(--ink)}
 .chk{display:flex;align-items:center;gap:6px;font-size:.875rem;font-weight:700;color:var(--muted);cursor:pointer}
