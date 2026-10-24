@@ -76,7 +76,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--yellow);outline
 .b0{background:#9fe0b6}.b1{background:var(--yellow)}.b2{background:#ffa25e}.b3{background:#ff7d74}
 .help{display:grid;gap:10px}
 .or{font-weight:900;color:var(--muted)}
-.tomap{padding:4px 12px;font-size:.88rem;box-shadow:3px 3px 0 var(--ink)}
+.btn.tomap{padding:4px 12px;font-size:.88rem;box-shadow:3px 3px 0 var(--ink)}
+.toplink{font-weight:700;font-size:.92rem;color:var(--ink);text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:2px}
 .linkbtn{font:inherit;font-weight:900;font-size:.9rem;background:none;border:0;border-bottom:2px solid var(--ink);color:var(--ink);padding:0;cursor:pointer}
 #levelDlg{max-height:calc(100dvh - 32px);overflow:auto;border:var(--bd);box-shadow:var(--shadow);padding:0;max-width:min(520px,calc(100vw - 32px));width:100%;background:var(--card);color:var(--ink)}
 #levelDlg::backdrop{background:rgba(20,20,20,.55)}
@@ -158,8 +159,8 @@ footer p{margin:0}
 <body>
 <div class="wrap">
   <header>
-    <div class="row" style="justify-content:space-between;width:100%"><a class="btn w tomap" href="index.html">← 回里級地圖</a><span class="chip">單棟初篩 · 自己先看一次</span></div>
     <p class="brand"><a href="index.html">危老檢查你我他</a></p>
+    <div class="row" style="justify-content:space-between;width:100%;margin-top:-4px"><a class="tomap toplink" href="index.html">← 回里級地圖</a><span class="chip">單棟初篩 · 自己先看一次</span></div>
   </header>
 
   <section class="hero">
