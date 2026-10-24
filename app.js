@@ -408,6 +408,8 @@ $('f').addEventListener('submit',e=>{e.preventDefault();items=suggest(q.value);i
 
 // ---------- boot ----------
 panel();chips();legend();
+// 手機上進階設定預設收起來（桌機是地圖左邊的直式欄）
+if(matchMedia('(max-width:1000px)').matches)$('layers').open=false;
 // 單棟頁「回里級地圖」會帶 ?q=地址，門牌載入後自動查詢
 if(qs.get('q')){q.value=qs.get('q');$('clear').hidden=false}
 const enginePromise=(CFG.googleMapsApiKey?startGoogle().catch(err=>{console.warn(err);return startFree()}):startFree()).catch(err=>{console.error(err);$('engine').textContent='地圖載入失敗'});

@@ -86,6 +86,12 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--yellow);outline
 .chipb i{width:12px;height:12px;border:2px solid var(--ink);display:inline-block}
 .chipb[aria-pressed="true"]{background:var(--ink);color:var(--yellow)}
 .chipb:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.mapwrap{display:grid;grid-template-columns:300px minmax(0,1fr);gap:18px;align-items:stretch;min-width:0}
+.mapwrap>.layers{overflow:auto;position:relative}
+@media (min-width:1001px){.mapwrap>.layers{contain:size}}
+.mapwrap>.layers>summary{position:sticky;top:0;z-index:2;background:var(--card)}
+@media (min-width:1001px){.mapwrap>.layers>summary{pointer-events:none}}
+@media (max-width:1000px){.mapwrap{grid-template-columns:minmax(0,1fr)}.mapwrap>.layers{order:2}}
 details.layers>summary{cursor:pointer;list-style:none;border-bottom:0}
 details.layers>summary::-webkit-details-marker{display:none}
 details.layers[open]>summary{border-bottom:var(--bd)}
@@ -131,7 +137,8 @@ details.layers[open]>summary{border-bottom:var(--bd)}
 .legend .g{display:inline-flex;align-items:center;gap:2px}
 
 .side{display:grid;gap:18px;min-width:0}
-.left{display:grid;gap:18px;min-width:0}
+.left{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;min-width:0}
+.mapwrap>*{min-width:0}
 .result{background:var(--blue);color:#fff}
 .result .cap{background:var(--ink);color:var(--yellow)}
 .result .cap small{color:#cfd6ff}
@@ -201,7 +208,7 @@ footer a,.src a{color:inherit;text-decoration:underline;text-underline-offset:2p
 <div class="wrap">
   <header>
     <p class="brand">危老檢查你我他</p>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="chip" id="engine">底圖載入中</span><span class="chip w">臺北市 456 里</span><a class="chip" href="plan.html" style="color:inherit;text-decoration:none">市府百日方案 →</a></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="chip" id="engine">底圖載入中</span><span class="chip w">臺北市 456 里</span></div>
   </header>
 
   <section class="hero">
@@ -227,6 +234,16 @@ footer a,.src a{color:inherit;text-decoration:underline;text-underline-offset:2p
 
   <div class="main">
     <div class="left">
+    <div class="mapwrap">
+    <details class="card layers" id="layers" open>
+        <summary class="cap">進階設定 <small>權重、圖層、透明度、配色</small></summary>
+        <div class="wts">
+          <div style="font-weight:900;font-size:.88rem">分數怎麼算</div>
+          <div class="seg" id="presets"></div>
+          <p class="sub" id="wdesc"></p>
+        </div>
+        <div id="laylist"></div>
+      </details>
     <section class="card mapcard">
       <div class="cap"><span>危老分數地圖</span><small id="wlabel">液化 40／高齡 30／老屋 30</small></div>
       <div class="stats" id="stats" aria-live="polite"></div>
@@ -243,21 +260,15 @@ footer a,.src a{color:inherit;text-decoration:underline;text-underline-offset:2p
       <div class="legend" id="legend"></div>
     </section>
 
+    </div>
+
     <section class="card dbcard">
       <div class="cap"><span>現在 → 2035 變化</span><div class="seg" role="group" aria-label="啞鈴圖排序"><button id="dbTop" aria-pressed="true">2035 前 20</button><button id="dbRise" aria-pressed="false">上升最多 20</button></div></div>
       <div id="db"></div>
       <p class="dbnote">○ 現在　● 2035 推估　線越長，十年內分數升得越多。★＝現在不在前 30、2035 進入前 30 的里。點一列可在地圖上找到該里。「上升最多」裡分數低的里，多半是現在 20–29 年的房子到 2035 年剛好滿 30 年。</p>
     </section>
 
-    <details class="card layers" id="layers">
-        <summary class="cap">進階設定 <small>分數權重、透明度、配色 ▾</small></summary>
-        <div class="wts">
-          <div style="font-weight:900;font-size:.88rem">分數怎麼算</div>
-          <div class="seg" id="presets"></div>
-          <p class="sub" id="wdesc"></p>
-        </div>
-        <div id="laylist"></div>
-      </details>
+
     </div>
 
     <div class="side">
@@ -282,7 +293,7 @@ footer a,.src a{color:inherit;text-decoration:underline;text-underline-offset:2p
       <li><b>地址查詢</b>：內政部門牌位置資料（同上，約 25 萬個門牌）。</li>
     </ul>
     <p>分數是一個里的平均狀況，不是單棟耐震評估。建物結構與耐震評估資料沒有開放。老屋比例用實價登錄成交建物推估，有成交的房子偏新，實際老屋比例約再高 11 個百分點。</p>
-    <p>資料整理日期：2026 年 10 月 24 日。市府上任 100 天怎麼推動，見<a href="plan.html">百日實施方案</a>。</p>
+    <p>資料整理日期：2026 年 10 月 24 日。</p>
   </footer>
 </div>
 
