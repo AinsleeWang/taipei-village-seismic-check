@@ -38,7 +38,8 @@ header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-betw
 .steps button+button{border-left:3px solid #141414}
 .steps button b{font-family:var(--latin);font-size:1.15rem}
 .steps button[aria-current="step"]{background:#141414;color:var(--yellow)}
-.steps button.ok::after{content:"✓";position:absolute;top:4px;right:6px;width:20px;height:20px;line-height:17px;text-align:center;font-size:.8rem;background:var(--yellow);color:#141414;border:2px solid #141414;border-radius:50%}
+.steps button b{position:relative}
+.steps button.ok b::after{content:"✓";position:absolute;left:100%;top:0;padding-left:3px}
 .card{background:var(--card);border:var(--bd);box-shadow:var(--shadow)}
 .cap{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;padding:8px 14px;border-bottom:var(--bd);font-weight:900;background:var(--ink);color:var(--paper)}
 .cap small{font-family:var(--mono);font-weight:500;font-size:.72rem;opacity:.8}
