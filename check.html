@@ -76,6 +76,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--yellow);outline
 .b0{background:#9fe0b6}.b1{background:var(--yellow)}.b2{background:#ffa25e}.b3{background:#ff7d74}
 .help{display:grid;gap:10px}
 .or{font-weight:900;color:var(--muted)}
+.photobar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;border:var(--bd);background:var(--paper);padding:8px 10px;margin-bottom:10px;font-weight:900}
+.btn.sm{padding:3px 10px;font-size:.85rem;box-shadow:2px 2px 0 var(--ink);display:inline-block}
 .btn.tomap{padding:4px 12px;font-size:.88rem;box-shadow:3px 3px 0 var(--ink)}
 .toplink{font-weight:700;font-size:.92rem;color:var(--ink);text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:2px}
 .linkbtn{font:inherit;font-weight:900;font-size:.9rem;background:none;border:0;border-bottom:2px solid var(--ink);color:var(--ink);padding:0;cursor:pointer}
@@ -135,13 +137,14 @@ footer p{margin:0}
   body{background:#fff;color:#000;padding:0!important;margin:0}
   .wrap{display:block;max-width:none;width:auto;margin:0}
   .wrap>*:not(#report){display:none!important}
-  #report{display:block!important;width:100%;max-width:100%;box-sizing:border-box;font-size:11pt;line-height:1.5;color:#000}
+  #report{display:block!important;width:100%;max-width:100%;box-sizing:border-box;padding-right:4px;font-size:11pt;line-height:1.5;color:#000}
   #report table{table-layout:fixed}
   #report td,#report th{overflow-wrap:anywhere}
   #report h1{font-size:18pt;margin:0}
   #report h2{font-size:12pt;margin:14px 0 6px;border-bottom:2px solid #000;padding-bottom:2px}
-  #report table{border-collapse:collapse;width:100%}
-  #report th,#report td{border:1px solid #000;padding:3px 8px;text-align:left;vertical-align:top}
+  /* Safari 列印會把 border-collapse 表格最右邊那條線裁掉：改成分開的框線，並留一點右邊空間 */
+  #report table{border-collapse:separate;border-spacing:0;width:calc(100% - 4px);border-top:1px solid #000;border-left:1px solid #000}
+  #report th,#report td{border:0;border-right:1px solid #000;border-bottom:1px solid #000;padding:3px 8px;text-align:left;vertical-align:top}
   #report th{width:9em;background:#eee}
   #report .rhead{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:4px solid #000;padding-bottom:6px}
   #report .rlv{border:3px solid #000;padding:8px 12px;display:flex;gap:14px;align-items:center;margin-top:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -264,6 +267,10 @@ footer p{margin:0}
         <span class="sub">沒有裂縫也可以直接跳到下一步。</span>
       </div>
       <div id="crackOut" hidden>
+        <div class="photobar">
+          <span id="photoInfo">目前的照片</span>
+          <span class="row" style="gap:8px"><label class="btn w sm" for="cam">📷 重拍</label><label class="btn w sm" for="pick">換一張</label><button class="btn w sm" id="delPhoto" type="button">刪除照片</button></span>
+        </div>
         <div class="row" style="justify-content:space-between;margin-bottom:8px">
           <div class="togg" id="view"><button data-v="mark" aria-pressed="true">標出裂縫</button><button data-v="orig" aria-pressed="false">原圖</button></div>
           <span class="sub" id="cstat"></span>
@@ -538,7 +545,13 @@ let photo = null, photoBlob = null, photoData = null, analysis = null, viewMode 
 ['#cam','#pick'].forEach(id => $(id).onchange = e => { const f = e.target.files[0]; if (f) loadPhoto(f); e.target.value = ''; });
 function loadPhoto(src, restoring){
   const img = new Image();
-  img.onload = () => { photo = img; if (!restoring) st.ai = null; analysis = analyze(img); draw(); showAnalysis(restoring); makeBlob(img); };
+  if (!restoring) st.photoAt = Date.now();
+  img.onload = () => {
+    photo = img; if (!restoring) st.ai = null; analysis = analyze(img); draw(); showAnalysis(restoring); makeBlob(img);
+    $('#drop').hidden = true;
+    const t = st.photoAt ? new Date(st.photoAt).toLocaleString('zh-TW', {month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit'}) : '';
+    $('#photoInfo').textContent = restoring ? `上次存的照片${t ? '（' + t + '）' : ''}` : `剛拍的照片${t ? '（' + t + '）' : ''}`;
+  };
   img.src = typeof src === 'string' ? src : URL.createObjectURL(src);
 }
 function makeBlob(img){
@@ -660,6 +673,15 @@ function draw(){
   }
   $('#crackOut').hidden = false;
 }
+// 刪除照片：照片、自動判讀、Claude 判讀都清掉；自動帶入的走向也拿掉（自己選的保留）
+$('#delPhoto').onclick = () => {
+  if (!confirm('要刪除這張照片和它的判讀結果嗎？')) return;
+  if (st.auto && st.dir === st.auto) setOpt('dir', null);
+  photo = photoBlob = photoData = analysis = null; st.auto = null; st.ai = null; st.photoAt = null;
+  $('#crackOut').hidden = true; $('#dirs').hidden = true; $('#cwarn').hidden = true; $('#aiBox').hidden = true;
+  $('#drop').hidden = false; $('#dirHint').textContent = '拍照後會自動帶入，你也可以自己改。';
+  save();
+};
 $$('#view button').forEach(b => b.onclick = () => { viewMode = b.dataset.v; $$('#view button').forEach(x => x.setAttribute('aria-pressed', x === b)); draw(); });
 function showAnalysis(restoring){
   const a = analysis;
@@ -936,7 +958,7 @@ function applyDraft(d, source){
   ['struct','soft','liq','roof','balc','wall','obs','where','dir','width','spall','rebar'].forEach(k => { if (s[k]) setOpt(k, s[k]); });
   st.tilts = Array.isArray(s.tilts) ? s.tilts.filter(t => t && typeof t.deg === 'number').map(t => ({ mode:String(t.mode), deg:t.deg, label:String(t.label), cal:t.cal === true })) : [];
   renderMeas();
-  st.auto = s.auto || null; st.ai = s.ai || null;
+  st.auto = s.auto || null; st.ai = s.ai || null; st.photoAt = typeof s.photoAt === 'number' ? s.photoAt : null;
   if (d.photo && /^data:image\/jpeg;base64,/.test(d.photo)){ photoData = d.photo; loadPhoto(d.photo, true); }
   if (st.ai && typeof st.ai === 'object') showAi(st.ai);
   restoringNow = false;
