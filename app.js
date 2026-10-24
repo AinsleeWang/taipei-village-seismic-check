@@ -231,6 +231,9 @@ function legend(){const g=[];
   if(L.fire.on)g.push(`<span class="g"><span class="sw" style="background:${PAL.fire[L.fire.pal][0]}"></span>有救災列管的里</span>`);
   $('legend').innerHTML=g.join('')||'<span>沒有開啟的疊圖</span>'}
 function save(){store.set('layers',Object.fromEntries(LAYERS.map(l=>[l.k,{on:L[l.k].on,op:L[l.k].op,pal:L[l.k].pal}])))}
+const SHORT={score:'危老分數',liq:'液化潛勢',house:'逐棟屋齡',old:'高齡人口',fire:'救災巷道'};
+function chips(){$('chips').innerHTML='<span class="lbl">疊圖</span>'+LAYERS.map(({k})=>{const c=PAL[k][L[k].pal];return `<button class="chipb" data-k="${k}" aria-pressed="${L[k].on}"><i style="background:${c[Math.floor(c.length/2)]}"></i>${SHORT[k]}</button>`}).join('')}
+$('chips').addEventListener('click',e=>{const b=e.target.closest('.chipb');if(!b)return;const k=b.dataset.k;L[k].on=!L[k].on;save();panel();chips();legend();refresh()});
 function panel(){
   $('presets').innerHTML=PRESETS.map(p=>`<button data-p="${p.id}" aria-pressed="${p.id===preset}">${p.label}</button>`).join('');
   $('laylist').innerHTML=LAYERS.map(({k})=>{const l=L[k];return `<div class="lay" data-k="${k}" ${l.on?'':'data-off'}>
@@ -247,9 +250,9 @@ $('laylist').addEventListener('input',e=>{const lay=e.target.closest('.lay');if(
   else if(e.target.id==='op-'+k)L[k].op=+e.target.value;
   else if(e.target.id==='colh'){colH=+e.target.value;store.set('colH',colH)}
   else if(e.target.id==='oldonly'){houseOldOnly=e.target.checked;store.set('houseOldOnly',houseOldOnly)}
-  save();legend();refresh()});
+  save();chips();legend();refresh()});
 $('laylist').addEventListener('click',e=>{const b=e.target.closest('.pal');if(!b)return;const k=b.closest('.lay').dataset.k;L[k].pal=b.dataset.pal;
-  b.parentElement.querySelectorAll('.pal').forEach(x=>x.setAttribute('aria-pressed',x===b));save();legend();refresh()});
+  b.parentElement.querySelectorAll('.pal').forEach(x=>x.setAttribute('aria-pressed',x===b));save();chips();legend();refresh()});
 $('presets').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;preset=b.dataset.p;store.set('preset',preset);
   $('presets').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));rescore();ver++;if(sel)render(sel,lastAddr,pin,lastWarn);refresh()});
 $('v3').onclick=()=>{is3d=true;$('v3').setAttribute('aria-pressed','true');$('v2').setAttribute('aria-pressed','false');engine&&engine.setPitch(55);refresh()};
@@ -316,7 +319,7 @@ function pick(s){q.value=s.main+(s.t==='s'?'':'');hide();const v=findV(s.x,s.y);
 $('f').addEventListener('submit',e=>{e.preventDefault();items=suggest(q.value);if(items.length)pick(items[Math.max(act,0)]);else showList()});
 
 // ---------- boot ----------
-panel();legend();
+panel();chips();legend();
 const enginePromise=(CFG.googleMapsApiKey?startGoogle().catch(err=>{console.warn(err);return startFree()}):startFree()).catch(err=>{console.error(err);$('engine').textContent='地圖載入失敗'});
 Promise.all([load('data/villages.json'),load('data/liquefaction.json')]).then(([vs,lq])=>{
   V=vs.map(a=>({code:a[0],d:a[1],n:a[2],x:[a[3],a[4],a[5]],hi:a[6],mid:a[7],p0:a[8],h0:a[9],hd:a[10],fire:a[11],rings:a[12],hn:a[13]||0,b:bbox(a[12]),L:a[6]+a[7]*.5}));

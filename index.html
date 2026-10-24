@@ -80,6 +80,15 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--yellow);outline
 .seg button+button{border-left:var(--bd)}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--yellow)}
 .loading{position:absolute;inset:auto 12px 12px auto;z-index:4;background:var(--yellow);border:2px solid var(--ink);font-weight:900;font-size:.8rem;padding:3px 10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;padding:10px 12px;border-top:var(--bd);background:var(--paper)}
+.chips .lbl{font-weight:900;align-self:center;margin-right:2px}
+.chipb{font:inherit;font-weight:900;font-size:.9rem;border:var(--bd);background:var(--card);padding:5px 12px;cursor:pointer;box-shadow:3px 3px 0 var(--ink);display:inline-flex;align-items:center;gap:6px}
+.chipb i{width:12px;height:12px;border:2px solid var(--ink);display:inline-block}
+.chipb[aria-pressed="true"]{background:var(--ink);color:var(--yellow)}
+.chipb:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+details.layers>summary{cursor:pointer;list-style:none;border-bottom:0}
+details.layers>summary::-webkit-details-marker{display:none}
+details.layers[open]>summary{border-bottom:var(--bd)}
 .legend{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;padding:8px 12px;border-top:var(--bd);font-size:.875rem;font-weight:700;min-height:42px}
 .legend .ramp{display:inline-flex;border:2px solid var(--ink);vertical-align:middle;margin:0 4px}
 .legend .ramp i{width:22px;height:12px;display:block}
@@ -187,6 +196,7 @@ footer p{margin:0;max-width:110ch}
       </div>
       <div id="map"></div>
       <div class="loading" id="loading">資料載入中</div>
+      <div class="chips" id="chips" role="group" aria-label="疊圖開關"></div>
       <div class="legend" id="legend"></div>
     </section>
 
@@ -196,15 +206,15 @@ footer p{margin:0;max-width:110ch}
         <div class="res-in" id="res"><p class="empty-res">輸入地址，或在地圖上點一個里。</p></div>
       </section>
 
-      <section class="card layers" id="layers">
-        <div class="cap">疊圖 <small>可開關、調透明度和配色</small></div>
+      <details class="card layers" id="layers">
+        <summary class="cap">進階設定 <small>分數權重、透明度、配色 ▾</small></summary>
         <div class="wts">
           <div style="font-weight:900;font-size:.88rem">分數怎麼算</div>
           <div class="seg" id="presets"></div>
           <p class="sub" id="wdesc"></p>
         </div>
         <div id="laylist"></div>
-      </section>
+      </details>
     </div>
   </div>
 
