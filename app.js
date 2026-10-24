@@ -97,7 +97,7 @@ let ver = 0;
 // 柱高（3D 時外框要畫在柱頂，才不會看起來浮在半空）
 // 拉近查某一里時，其他柱子壓低變淡，才不會擋住你查的里
 const focusOn=()=>sel&&is3d&&zoomNow>=12.8;
-const colZ=v=>is3d?(yr===2?Math.max(v.ds,1)*40:Math.max(v.s,2)*14)*colH*(focusOn()&&v!==sel?.25:1):0;
+const colZ=v=>is3d?(yr===2?Math.max(v.ds,1)*40:Math.max(v.s,2)*14)*colH*(focusOn()&&v!==sel?.08:1):0;
 const topZ=v=>L.score.on&&is3d?colZ(v)*elevK()+2:0;
 const ringPaths=v=>{const z=topZ(v);return v.rings.map(r=>r.map(([x,y])=>[x,y,z]))};
 function buildLayers(){
@@ -117,7 +117,7 @@ function buildLayers(){
     updateTriggers:{getFillColor:[L.fire.pal,L.fire.op]},pickable:true,onClick:clickV}));
   if (L.score.on) out.push(new D.PolygonLayer({id:'score',data:V,getPolygon:v=>v.rings,extruded:true,wireframe:true,
     getElevation:colZ,elevationScale:elevK(),
-    getFillColor:v=>v.code===selCode?[...hex('#ffd23f'),255]:[...(yr===2?ramp(DPAL,v.ds/30):ramp(PAL.score[L.score.pal],v.s/100)),A(L.score.op*(is3d?(focusOn()?.55:1):.72))],
+    getFillColor:v=>v.code===selCode?[...hex('#ffd23f'),255]:[...(yr===2?ramp(DPAL,v.ds/30):ramp(PAL.score[L.score.pal],v.s/100)),A(L.score.op*(is3d?1:.72))],
     getLineColor:[20,20,20,160],lineWidthMinPixels:.8,stroked:false,
     material:{ambient:.55,diffuse:.55,shininess:8,specularColor:[40,40,40]},
     updateTriggers:{getFillColor:[L.score.pal,L.score.op,selCode,ver,is3d,yr,focusOn()],getElevation:[ver,colH,is3d,yr,selCode,focusOn()]},
@@ -134,7 +134,7 @@ function buildLayers(){
 }
   if (yr && (L.score.on||L.old.on)) out.push(new D.PathLayer({id:'newtop',data:V.filter(v=>v.isNew).flatMap(v=>ringPaths(v)),getPath:d=>d,getColor:hex('#3f5ad8'),getWidth:4,widthUnits:'pixels',jointRounded:true,updateTriggers:{getPath:[zoomNow,is3d,yr,colH,ver]}}));
   if (sel) out.push(new D.PathLayer({id:'sel',data:ringPaths(sel),getPath:d=>d,getColor:[20,20,20,255],getWidth:4,widthUnits:'pixels',jointRounded:true,parameters:{depthCompare:'always'}}));
-  if (sel) out.push(new D.TextLayer({id:'selname',data:[sel],getPosition:v=>[v.c[0],v.c[1],topZ(v)+30],getText:v=>`${v.n}　${v.s} 分・第 ${v.r} 名`,
+  if (sel) out.push(new D.TextLayer({id:'selname',data:[sel],getPosition:v=>[v.c[0],v.c[1],topZ(v)+30],getText:v=>yr===2?`${v.n}　+${v.ds} 分（${v.s0} → ${v.s1}）`:`${v.n}　${v.s} 分・第 ${v.r} 名`,
     characterSet:'auto',fontFamily:'"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif',fontWeight:900,getSize:15,getColor:[20,20,20],
     background:true,getBackgroundColor:[255,255,255,245],getBorderColor:[20,20,20],getBorderWidth:2.5,backgroundPadding:[8,4],getPixelOffset:[0,-22],
     updateTriggers:{getText:[ver,yr],getPosition:[zoomNow,is3d,yr,colH,ver]},parameters:{depthCompare:'always'}}));
