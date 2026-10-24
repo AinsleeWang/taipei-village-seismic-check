@@ -96,6 +96,7 @@ details.layers[open]>summary{border-bottom:var(--bd)}
 .legend .g{display:inline-flex;align-items:center;gap:2px}
 
 .side{display:grid;gap:18px;min-width:0}
+.left{display:grid;gap:18px;min-width:0}
 .result{background:var(--blue);color:#fff}
 .result .cap{background:var(--ink);color:var(--yellow)}
 .result .cap small{color:#cfd6ff}
@@ -188,6 +189,7 @@ footer p{margin:0;max-width:110ch}
   </section>
 
   <div class="main">
+    <div class="left">
     <section class="card mapcard">
       <div class="cap"><span>危老分數地圖</span><small id="wlabel">液化 40／高齡 30／老屋 30</small></div>
       <div class="mapctl">
@@ -200,13 +202,7 @@ footer p{margin:0;max-width:110ch}
       <div class="legend" id="legend"></div>
     </section>
 
-    <div class="side">
-      <section class="card result" aria-live="polite">
-        <div class="cap">查詢結果 <small id="coord">—</small></div>
-        <div class="res-in" id="res"><p class="empty-res">輸入地址，或在地圖上點一個里。</p></div>
-      </section>
-
-      <details class="card layers" id="layers">
+    <details class="card layers" id="layers">
         <summary class="cap">進階設定 <small>分數權重、透明度、配色 ▾</small></summary>
         <div class="wts">
           <div style="font-weight:900;font-size:.88rem">分數怎麼算</div>
@@ -216,10 +212,18 @@ footer p{margin:0;max-width:110ch}
         <div id="laylist"></div>
       </details>
     </div>
+
+    <div class="side">
+      <section class="card result" aria-live="polite">
+        <div class="cap">查詢結果 <small id="coord">—</small></div>
+        <div class="res-in" id="res"><p class="empty-res">輸入地址，或在地圖上點一個里。</p></div>
+      </section>
+
+    </div>
   </div>
 
   <footer>
-    <p><b>資料來源：</b>里界與分數同 A 版原型；液化潛勢（臺北市政府）；各里年齡人口 115 年 9 月（data.taipei）；逐棟屋齡為實價登錄 2011–2026 成交建物（每棟一點，只含有成交過的建物）；火災搶救困難地區與長巷道等列管清冊（臺北市消防局，依里別對應）；門牌座標為內政部門牌位置資料。</p>
+    <p><b>資料來源：</b>里界與分數同 A 版原型；液化潛勢（臺北市政府）；各里年齡人口 115 年 9 月（data.taipei）；逐棟屋齡為內政部實價登錄 2011–2026 成交建物（每棟一點，只含有成交過的建物，座標由第三方 monkey1wizard/taiwan-lvr-geodata 依門牌定位）；救災巷道位置是用門牌資料把清冊路名定位而成；火災搶救困難地區與長巷道等列管清冊（臺北市消防局，依里別對應）；門牌座標為內政部門牌位置資料。</p>
     <p>分數是一個里的平均狀況，不是單棟耐震評估。建物結構與耐震評估資料沒有開放。老屋比例用實價登錄成交建物推估，有成交的房子偏新，實際老屋比例約再高 11 個百分點。</p>
     <p>資料整理日期：2026 年 10 月 24 日。</p>
   </footer>
