@@ -79,7 +79,7 @@ const inPoly=(x,y,rings)=>{let c=false;for(const r of rings)if(inRing(x,y,r))c=!
 const findV=(x,y)=>V.find(v=>x>=v.b[0]&&x<=v.b[2]&&y>=v.b[1]&&y<=v.b[3]&&inPoly(x,y,v.rings));
 
 function weights(){return PRESETS.find(p=>p.id===preset).w}
-const wl=()=>{const w=weights();return `液化 ${w.liq}／高齡 ${w.old}／老屋 ${w.house}`};
+const wl=()=>{const w=weights();return `權重：液化面積 ${w.liq}、高齡人口 ${w.old}、老屋比例 ${w.house}。換權重後排名會重算。`};
 function rescore(){const w=weights(),t=w.liq+w.old+w.house;
   const P=x=>[100*w.liq/t*x[0],100*w.old/t*x[1],100*w.house/t*x[2]];
   for(const v of V){v.pt0=P(v.x0);v.pt1=P(v.x1);v.s0=Math.round(v.pt0[0]+v.pt0[1]+v.pt0[2]);v.s1=Math.round(v.pt1[0]+v.pt1[1]+v.pt1[2])}
