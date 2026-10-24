@@ -89,6 +89,16 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--yellow);outline
 details.layers>summary{cursor:pointer;list-style:none;border-bottom:0}
 details.layers>summary::-webkit-details-marker{display:none}
 details.layers[open]>summary{border-bottom:var(--bd)}
+.yearnote{margin:0;padding:8px 12px;border-top:var(--bd);background:#e4e8fb;font-size:.875rem}
+.yrline{margin:0;font-size:.875rem;font-weight:700;color:#e3e8ff}
+.yrline b{background:var(--yellow);color:var(--ink);padding:0 6px;border:2px solid var(--ink)}
+.top ol{list-style:none;margin:0;padding:0}
+.top li+li{border-top:2px solid var(--ink)}
+.top button{width:100%;display:grid;grid-template-columns:2.2em 1fr auto;gap:8px;align-items:center;background:var(--card);border:0;font:inherit;font-weight:700;padding:6px 12px;cursor:pointer;text-align:left}
+.top button:hover{background:var(--yellow)}
+.top .rk{font-family:var(--latin);font-size:1.1rem}
+.top .sc{font-family:var(--mono);font-size:.875rem}
+.top em{font-style:normal;font-size:.75rem;background:var(--blue);color:#fff;padding:0 6px;margin-left:4px}
 .legend{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;padding:8px 12px;border-top:var(--bd);font-size:.875rem;font-weight:700;min-height:42px}
 .legend .ramp{display:inline-flex;border:2px solid var(--ink);vertical-align:middle;margin:0 4px}
 .legend .ramp i{width:22px;height:12px;display:block}
@@ -197,9 +207,11 @@ footer a,.src a{color:inherit;text-decoration:underline;text-underline-offset:2p
       <div class="mapctl">
         <div class="seg" role="group" aria-label="視角"><button id="v3" aria-pressed="true">3D</button><button id="v2" aria-pressed="false">2D</button></div>
         <div class="seg"><button id="home" aria-pressed="false">全市</button></div>
+        <div class="seg" role="group" aria-label="年份"><button id="y0" aria-pressed="true">現在</button><button id="y1" aria-pressed="false">2035</button></div>
       </div>
       <div id="map"></div>
       <div class="loading" id="loading">資料載入中</div>
+      <p class="yearnote" id="yearnote" hidden><b>2035 推估：</b>把各里 115 年 9 月的單齡人口往後推 10 年，套用 10 年存活率，新生兒以 0 歲人數×0.95 估算，不計遷入遷出；全市 65 歲以上會從 24.9% 升到約 33.3%。老屋比例改用現在 20 年以上的比例（到 2035 年就滿 30 年）。液化不變。這是推估，不是預測。</p>
       <div class="chips" id="chips" role="group" aria-label="疊圖開關"></div>
       <div class="legend" id="legend"></div>
     </section>
@@ -216,6 +228,8 @@ footer a,.src a{color:inherit;text-decoration:underline;text-underline-offset:2p
     </div>
 
     <div class="side">
+      <section class="card top"><div class="cap" id="top10h">全市前 10 名</div><ol id="top10"></ol></section>
+
       <section class="card result" aria-live="polite">
         <div class="cap">查詢結果 <small id="coord">—</small></div>
         <div class="res-in" id="res"><p class="empty-res">輸入地址，或在地圖上點一個里。</p></div>
