@@ -30,7 +30,7 @@ const LAYERS = [
   {k:'liq', name:'土壤液化潛勢', tag:'真實', on:false, op:.55, pal:'blue', desc:'高／中／低潛勢範圍。'},
   {k:'house', name:'逐棟屋齡（實價登錄成交樣本）', tag:'成交樣本', on:false, op:.85, pal:'ink', desc:'只有 2011–2026 年有成交紀錄的建物，約占全市 28%，而且偏新，不是全部建物；屋齡用登錄的建築完成年，座標依門牌定位（第三方整理）。'},
   {k:'old', name:'高齡人口比例', tag:'真實', on:false, op:.75, pal:'violet', desc:'65 歲以上人口比例，以里為單位。'},
-  {k:'fire', name:'火災搶救困難、長巷道', tag:'真實', on:false, op:.9, pal:'red', desc:'消防局列管的 185 處巷道。清冊只有路名，線是用那條巷子的門牌排出來的大致走向，不是精確的道路線。'}
+  {k:'fire', name:'火災搶救困難、長巷道', tag:'真實', on:false, op:.9, pal:'red', desc:'消防局列管的 185 處巷道。清冊只有路名，線是用那條巷子的門牌排出來的大致走向，不是精確的道路線；185 處中 179 處畫得出線，其餘 6 處門牌不足，只列在該里的查詢結果。'}
 ];
 // 各圖層資料來源（頁尾與面板共用）
 const DT=id=>'https://data.taipei/dataset/detail?id='+id;
@@ -90,7 +90,7 @@ function rescore(){const w=weights(),t=w.liq+w.old+w.house;
 
 // ---------- layers ----------
 const ramp = (arr,t) => hex(arr[Math.max(0,Math.min(arr.length-1,Math.floor(t*arr.length)))]);
-const DPAL=['#fff3b0','#ffd23f','#f59a23','#e8650a','#a53d05']; // 變化模式色階（固定刻度 0–30 分）
+const DPAL=['#fff0ee','#f9b4ab','#ef6a5c','#d62e1f','#7a120a']; // 變化模式色階（固定刻度 0–30 分）
 const A = op => Math.round(op*255);
 let ver = 0;
 // 柱高（3D 時外框要畫在柱頂，才不會看起來浮在半空）
@@ -126,12 +126,11 @@ function buildLayers(){
     getFillColor:h=>[...hex(PAL.house[L.house.pal][h.age>=30?0:1]),A(L.house.op*.75)],stroked:false,
     updateTriggers:{getFillColor:[L.house.pal,L.house.op]},pickable:true,parameters:{depthCompare:'always'}}));
   if (L.fire.on && FIRE.length){const fc=hex(PAL.fire[L.fire.pal][0]);
-    out.push(new D.PathLayer({id:'firecase',data:FIRELN,getPath:d=>d.p,getWidth:zoomNow>=14?9:5,widthUnits:'pixels',widthMinPixels:4,capRounded:true,jointRounded:true,
+    out.push(new D.PathLayer({id:'firecase',data:FIRELN,getPath:d=>d.p,getWidth:zoomNow>=14?10:4.5,widthUnits:'pixels',widthMinPixels:3,capRounded:true,jointRounded:true,
       getColor:[20,20,20,A(L.fire.op)],updateTriggers:{getColor:[L.fire.op],getWidth:[zoomNow>=14]},pickable:false,parameters:{depthCompare:'always'}}));
-    out.push(new D.PathLayer({id:'fireln',data:FIRELN,getPath:d=>d.p,getWidth:zoomNow>=14?5:2.5,widthUnits:'pixels',widthMinPixels:2,capRounded:true,jointRounded:true,
+    out.push(new D.PathLayer({id:'fireln',data:FIRELN,getPath:d=>d.p,getWidth:zoomNow>=14?6:2.5,widthUnits:'pixels',widthMinPixels:2,capRounded:true,jointRounded:true,
       getColor:[...fc,A(L.fire.op)],updateTriggers:{getColor:[L.fire.pal,L.fire.op],getWidth:[zoomNow>=14]},pickable:true,parameters:{depthCompare:'always'}}));
-    if(zoomNow<14)out.push(new D.ScatterplotLayer({id:'firec',data:FIRE,getPosition:d=>d.c,getRadius:zoomNow>=14?9:5,radiusUnits:'pixels',radiusMinPixels:4,
-      getFillColor:[...fc,255],stroked:true,getLineColor:[20,20,20],lineWidthMinPixels:zoomNow>=14?3:1.5,updateTriggers:{getFillColor:[L.fire.pal]},pickable:true,parameters:{depthCompare:'always'}}));}
+}
   if (yr && (L.score.on||L.old.on)) out.push(new D.PathLayer({id:'newtop',data:V.filter(v=>v.isNew).flatMap(v=>ringPaths(v)),getPath:d=>d,getColor:hex('#3f5ad8'),getWidth:4,widthUnits:'pixels',jointRounded:true,updateTriggers:{getPath:[zoomNow,is3d,yr,colH,ver]}}));
   if (sel) out.push(new D.PathLayer({id:'sel',data:ringPaths(sel),getPath:d=>d,getColor:[20,20,20,255],getWidth:4,widthUnits:'pixels',jointRounded:true,parameters:{depthCompare:'always'}}));
   if (pin) out.push(new D.ScatterplotLayer({id:'pin',data:[pin],getPosition:p=>[p[0],p[1],sel?topZ(sel)+1:0],getRadius:1,radiusUnits:'pixels',radiusMinPixels:10,
@@ -270,7 +269,7 @@ function render(v,addr,xy,warn){lastWarn=warn||'';
 // ---------- legend & layer panel ----------
 function legend(){const g=[];
   if(sel||pin)g.push(`<span class="g"><span class="sw" style="background:#ffd23f"></span>你查的里 <span class="sw" style="background:#e8650a;border-radius:50%"></span>你查的地址</span>`);
-  if(L.score.on&&yr===2)g.push(`<span class="g">十年內分數增加 0<span class="ramp">${DPAL.map(c=>`<i style="background:${c}"></i>`).join('')}</span>+30 以上（柱越高升越多）</span>`);
+  if(L.score.on&&yr===2)g.push(`<span class="g">2035 比現在多幾分：+0<span class="ramp">${DPAL.map(c=>`<i style="background:${c}"></i>`).join('')}</span>+30 以上（柱越高，增加越多）</span>`);
   else if(L.score.on)g.push(`<span class="g">${YL()}分數 0<span class="ramp">${PAL.score[L.score.pal].map(c=>`<i style="background:${c}"></i>`).join('')}</span>100</span>`);
   if(L.twin.on){const c=PAL.twin[L.twin.pal],ix=yr?[0,1,2,3]:[0,2,3];g.push(ix.map(i=>`<span class="g"><span class="sw" style="background:${c[i]}"></span>${TWN[i]}</span>`).join(''))}
   if(L.liq.on)g.push(`<span class="g">液化 ${['高','中','低'].map((n,i)=>`<span class="sw" style="background:${PAL.liq[L.liq.pal][i]}"></span>${n}`).join(' ')}</span>`);
@@ -278,7 +277,7 @@ function legend(){const g=[];
   else if(L.house.on)g.push(`<span class="g"><span class="sw" style="background:${PAL.house[L.house.pal][0]};border-radius:50%"></span>一棟 30 年以上建物（成交樣本）${houseOldOnly?'':` <span class="sw" style="background:${PAL.house[L.house.pal][1]};border-radius:50%"></span>一棟未滿 30 年建物`}</span>`);
   if(yr&&(L.score.on||L.old.on))g.push('<span class="g"><span class="sw" style="background:transparent;border:3px solid #3f5ad8"></span>2035 新進前 30 名</span>');
   if(L.old.on)g.push(`<span class="g">${yr?'2035 推估 ':''}高齡 15%<span class="ramp">${PAL.old[L.old.pal].map(c=>`<i style="background:${c}"></i>`).join('')}</span>40%</span>`);
-  if(L.fire.on)g.push(`<span class="g"><span style="display:inline-block;width:28px;height:7px;background:${PAL.fire[L.fire.pal][0]};border:2px solid #141414;border-radius:4px;vertical-align:middle;margin-right:4px"></span>救災巷道（消防局列管）${zoomNow<14?` <span class="sw" style="background:${PAL.fire[L.fire.pal][0]};border-radius:50%"></span>全市畫面的巷道位置`:''}</span>`);
+  if(L.fire.on)g.push(`<span class="g"><span style="display:inline-block;width:28px;height:7px;background:${PAL.fire[L.fire.pal][0]};border:2px solid #141414;border-radius:4px;vertical-align:middle;margin-right:4px"></span>救災巷道（消防局列管，一條線一處）</span>`);
   $('legend').innerHTML=g.join('')||'<span>沒有開啟的疊圖</span>'}
 function setOn(k,v){L[k].on=v;if(v&&AREA.includes(k))AREA.forEach(a=>{if(a!==k)L[a].on=false})}
 function save(){store.set('layers3',Object.fromEntries(LAYERS.map(l=>[l.k,{on:L[l.k].on,op:L[l.k].op,pal:L[l.k].pal}])))}
@@ -311,8 +310,8 @@ $('presets').addEventListener('click',e=>{const b=e.target.closest('button');if(
   $('presets').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));rescore();ver++;if(sel)render(sel,lastAddr,pin,lastWarn);refresh()});
 $('v3').onclick=()=>{is3d=true;$('v3').setAttribute('aria-pressed','true');$('v2').setAttribute('aria-pressed','false');engine&&engine.setPitch(55);refresh()};
 $('v2').onclick=()=>{is3d=false;$('v2').setAttribute('aria-pressed','true');$('v3').setAttribute('aria-pressed','false');engine&&engine.setPitch(0);refresh()};
-function setYear(y){yr=y;['y0','y1','y2'].forEach((id,i)=>$(id).setAttribute('aria-pressed',i===y));applyYear();ver++;top10();legend();stats();if(sel)render(sel,lastAddr,pin,lastWarn);refresh();
-  $('yearnote').hidden=!y;$('wlabel').textContent=yr===2?'顏色與柱高＝十年內分數增加多少':wl()}
+function setYear(y){yr=y;if(y===2&&!L.score.on){setOn('score',true);save();chips();panel()}['y0','y1','y2'].forEach((id,i)=>$(id).setAttribute('aria-pressed',i===y));applyYear();ver++;top10();legend();stats();if(sel)render(sel,lastAddr,pin,lastWarn);refresh();
+  $('yearnote').hidden=!y;$('modebadge').hidden=y!==2;$('wlabel').textContent=yr===2?'顏色與柱高＝十年內分數增加多少':wl()}
 ['y0','y1','y2'].forEach((id,i)=>$(id).onclick=()=>setYear(i));
 // 全市大字：現在 → 2035
 function stats(){if(!V.length)return;const pop=a=>V.reduce((t,v)=>t+a(v),0);
@@ -406,7 +405,7 @@ Promise.all([load('data/villages.json'),load('data/liquefaction.json')]).then(([
   return enginePromise}).then(()=>{refresh();$('loading').hidden=true;
     const h=decodeURIComponent(location.hash.slice(1));if(h){q.value=h;items=suggest(h)}})
   .catch(e=>{console.error(e);$('loading').textContent='資料載入失敗'});
-load('data/fire.json').then(d=>{FIRE=d;FIRELN=d.flatMap(f=>(f.ln&&f.ln.length?f.ln:[[f.c,f.c]]).map(p=>({p,f})));if(L.fire.on)refresh()});
+load('data/fire.json').then(d=>{FIRE=d;FIRELN=d.flatMap(f=>(f.ln||[]).filter(p=>p.length>1).map(p=>({p,f})));if(L.fire.on)refresh()});
 load('data/houses.json').then(d=>{MAT=d.mat;const p=d.p,o=[];for(let i=0;i<p.length;i+=5)if(p[i+2]<=96)o.push({x:p[i],y:p[i+1],age:p[i+2],fl:p[i+3],m:p[i+4]});HOUSES=o;if(L.house.on)refresh();if(sel)render(sel,lastAddr,pin,lastWarn)});
 load('data/addresses.json').then(d=>{ADDR=d;$('hint').textContent=`可查 ${d.s.length.toLocaleString()} 條路段巷弄、約 25 萬個門牌（內政部門牌位置資料）。`;
   if(q.value){items=suggest(q.value);if(items.length)pick(items[0])}}).catch(()=>{$('hint').textContent='門牌資料載入失敗，請重新整理。'});

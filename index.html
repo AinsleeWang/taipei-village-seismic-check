@@ -112,6 +112,7 @@ details.layers[open]>summary{border-bottom:var(--bd)}
 #db .row{cursor:pointer}
 #db .row:hover rect:last-of-type{fill:rgba(255,210,63,.35)}
 .dbnote{margin:0;padding:8px 12px;border-top:var(--bd);font-size:.875rem;color:var(--muted)}
+.modebadge{position:absolute;right:56px;top:150px;z-index:4;background:#d62e1f;color:#fff;border:var(--bd);box-shadow:3px 3px 0 var(--ink);font-weight:900;padding:4px 12px}
 .yearnote{margin:0;padding:8px 12px;border-top:var(--bd);background:#e4e8fb;font-size:.875rem}
 .yrline{margin:0;font-size:.875rem;font-weight:700;color:#e3e8ff}
 .yrline b{background:var(--yellow);color:var(--ink);padding:0 6px;border:2px solid var(--ink)}
@@ -231,9 +232,10 @@ footer a,.src a{color:inherit;text-decoration:underline;text-underline-offset:2p
       <div class="mapctl">
         <div class="seg" role="group" aria-label="視角"><button id="v3" aria-pressed="true">3D</button><button id="v2" aria-pressed="false">2D</button></div>
         <div class="seg"><button id="home" aria-pressed="false">全市</button></div>
-        <div class="seg" role="group" aria-label="年份"><button id="y0" aria-pressed="true">現在</button><button id="y1" aria-pressed="false">2035</button><button id="y2" aria-pressed="false">變化</button></div>
+        <div class="seg" role="group" aria-label="年份"><button id="y0" aria-pressed="true">現在</button><button id="y1" aria-pressed="false">2035</button><button id="y2" aria-pressed="false">增加多少</button></div>
       </div>
       <div id="map"></div>
+      <div class="modebadge" id="modebadge" hidden>現在看的是：2035 比現在多幾分</div>
       <div class="loading" id="loading">資料載入中</div>
       <p class="yearnote" id="yearnote" hidden><b>2035 推估：</b>把各里 115 年 9 月的單齡人口往後推 10 年，套用 10 年存活率，新生兒以 0 歲人數×0.95 估算，不計遷入遷出；全市 65 歲以上會從 24.9% 升到約 33.3%。老屋比例改用現在 20 年以上的比例（到 2035 年就滿 30 年）。液化不變。這是推估，不是預測。</p>
       <div class="chips" id="chips" role="group" aria-label="疊圖開關"></div>
@@ -275,7 +277,7 @@ footer a,.src a{color:inherit;text-decoration:underline;text-underline-offset:2p
       <li><b>土壤液化潛勢</b>：<a href="https://data.taipei/dataset/detail?id=ec40e067-930f-4058-b7dc-71399d5f3147" target="_blank" rel="noopener">臺北市土壤液化潛勢圖</a>（臺北市政府工務局，2016–2018 調查）</li>
       <li><b>高齡人口</b>：<a href="https://data.taipei/dataset/detail?id=a6394e3f-3514-4542-87bd-de4310a40db3" target="_blank" rel="noopener">臺北市各里人口數按年齡分</a>（臺北市政府民政局，115 年 9 月）</li>
       <li><b>屋齡（成交樣本）與老屋比例</b>：<a href="https://plvr.land.moi.gov.tw/DownloadOpenData" target="_blank" rel="noopener">不動產實價登錄</a>（內政部，2011–2026 成交建物，約占全市 28%）；座標用第三方整理版 <a href="https://github.com/monkey1wizard/taiwan-lvr-geodata" target="_blank" rel="noopener">taiwan-lvr-geodata</a>；屋齡已用 <a href="https://data.taipei/dataset/detail?id=c876ff02-af2e-4eb8-bd33-d444f5052733" target="_blank" rel="noopener">臺北市歷年使用執照摘要</a> 抽查，97.4% 相差 1 年以內。</li>
-      <li><b>救災巷道</b>：<a href="https://data.taipei/dataset/detail?id=7a800e92-eb22-461f-b29d-8def2127a1bc" target="_blank" rel="noopener">臺北市消防通道清冊</a>（臺北市政府消防局）。清冊只有路名，位置是用內政部門牌位置資料（<a href="https://github.com/monkey1wizard/taiwan-address-data" target="_blank" rel="noopener">taiwan-address-data</a> 整理版）定位，185 處中 182 處找得到門牌；地圖上的線是用門牌排出的大致走向。</li>
+      <li><b>救災巷道</b>：<a href="https://data.taipei/dataset/detail?id=7a800e92-eb22-461f-b29d-8def2127a1bc" target="_blank" rel="noopener">臺北市消防通道清冊</a>（臺北市政府消防局）。清冊只有路名，位置是用內政部門牌位置資料（<a href="https://github.com/monkey1wizard/taiwan-address-data" target="_blank" rel="noopener">taiwan-address-data</a> 整理版）定位，185 處中 179 處畫得出線（其餘 6 處門牌不足，只列在該里的查詢結果）；地圖上的線是用門牌排出的大致走向。</li>
       <li><b>地址查詢</b>：內政部門牌位置資料（同上，約 25 萬個門牌）。</li>
     </ul>
     <p>分數是一個里的平均狀況，不是單棟耐震評估。建物結構與耐震評估資料沒有開放。老屋比例用實價登錄成交建物推估，有成交的房子偏新，實際老屋比例約再高 11 個百分點。</p>
