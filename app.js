@@ -72,6 +72,7 @@ let V=[], LIQ=[], HOUSES=null, MAT=[], ADDR=null, FIRE=[], FIRELN=[];
 let sel=null, pin=null, N=0;
 const load = u => fetch(u).then(r=>{if(!r.ok)throw new Error(u+' '+r.status);return r.json()});
 
+function cen(rings){const r=rings.reduce((a,b)=>b.length>a.length?b:a);let x=0,y=0;for(const p of r){x+=p[0];y+=p[1]}return [x/r.length,y/r.length]}
 function bbox(rings){let b=[180,90,-180,-90];for(const r of rings)for(const[x,y]of r){if(x<b[0])b[0]=x;if(y<b[1])b[1]=y;if(x>b[2])b[2]=x;if(y>b[3])b[3]=y}return b}
 const inRing=(x,y,r)=>{let c=false;for(let i=0,j=r.length-1;i<r.length;j=i++){const[xi,yi]=r[i],[xj,yj]=r[j];if((yi>y)!==(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)c=!c}return c};
 const inPoly=(x,y,rings)=>{let c=false;for(const r of rings)if(inRing(x,y,r))c=!c;return c};
@@ -120,7 +121,7 @@ function buildLayers(){
     getLineColor:[20,20,20,160],lineWidthMinPixels:.8,stroked:false,
     material:{ambient:.55,diffuse:.55,shininess:8,specularColor:[40,40,40]},
     updateTriggers:{getFillColor:[L.score.pal,L.score.op,selCode,ver,is3d,yr,focusOn()],getElevation:[ver,colH,is3d,yr,selCode,focusOn()]},
-    transitions:{getElevation:{duration:900},getFillColor:{duration:700}},pickable:true,autoHighlight:true,highlightColor:[255,210,63,220],onClick:clickV}));
+    transitions:{getElevation:{duration:900},getFillColor:{duration:700}},pickable:true,autoHighlight:true,highlightColor:[63,90,216,200],onClick:clickV}));
   if (L.house.on && HOUSES && zoomNow>=13.5) out.push(new D.ScatterplotLayer({id:'house',data:HOUSES.filter(h=>!houseOldOnly||h.age>=30),
     getPosition:h=>[h.x,h.y,is3d&&L.score.on?0:0],getRadius:h=>h.age>=30?7:5,radiusMinPixels:1.5,radiusMaxPixels:5,
     getFillColor:h=>[...hex(PAL.house[L.house.pal][h.age>=30?0:1]),A(L.house.op*.75)],stroked:false,
@@ -133,6 +134,10 @@ function buildLayers(){
 }
   if (yr && (L.score.on||L.old.on)) out.push(new D.PathLayer({id:'newtop',data:V.filter(v=>v.isNew).flatMap(v=>ringPaths(v)),getPath:d=>d,getColor:hex('#3f5ad8'),getWidth:4,widthUnits:'pixels',jointRounded:true,updateTriggers:{getPath:[zoomNow,is3d,yr,colH,ver]}}));
   if (sel) out.push(new D.PathLayer({id:'sel',data:ringPaths(sel),getPath:d=>d,getColor:[20,20,20,255],getWidth:4,widthUnits:'pixels',jointRounded:true,parameters:{depthCompare:'always'}}));
+  if (sel) out.push(new D.TextLayer({id:'selname',data:[sel],getPosition:v=>[v.c[0],v.c[1],topZ(v)+30],getText:v=>`${v.n}　${v.s} 分・第 ${v.r} 名`,
+    characterSet:'auto',fontFamily:'"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif',fontWeight:900,getSize:15,getColor:[20,20,20],
+    background:true,getBackgroundColor:[255,255,255,245],getBorderColor:[20,20,20],getBorderWidth:2.5,backgroundPadding:[8,4],getPixelOffset:[0,-22],
+    updateTriggers:{getText:[ver,yr],getPosition:[zoomNow,is3d,yr,colH,ver]},parameters:{depthCompare:'always'}}));
   if (pin) out.push(new D.ScatterplotLayer({id:'pin',data:[pin],getPosition:p=>[p[0],p[1],sel?topZ(sel)+1:0],getRadius:1,radiusUnits:'pixels',radiusMinPixels:10,
     getFillColor:hex('#e8650a'),stroked:true,getLineColor:[20,20,20],lineWidthMinPixels:3,parameters:{depthCompare:'always'}}));
   return out;
@@ -151,6 +156,15 @@ function tooltip({object,layer}){
 }
 
 // ---------- map engines ----------
+// 自己畫的名牌：游標停在里上就一直顯示，重畫地圖也不會消失
+let tipEl=null;
+function hover(info){if(!tipEl){tipEl=document.createElement('div');tipEl.className='maptip';tipEl.setAttribute('role','tooltip');$('map').appendChild(tipEl)}
+  const t=info&&info.object?tooltip(info):null;
+  if(!t){tipEl.hidden=true;return}
+  tipEl.innerHTML=t.html;tipEl.hidden=false;
+  const W=$('map').clientWidth,w=tipEl.offsetWidth,h=tipEl.offsetHeight;
+  tipEl.style.left=Math.max(4,Math.min(info.x+14,W-w-4))+'px';tipEl.style.top=Math.max(4,info.y-h-14)+'px'}
+$('map').addEventListener('mouseleave',()=>{if(tipEl)tipEl.hidden=true});
 let engine=null; // {setLayers, fly, setPitch, name}
 function refresh(){if(engine)engine.setLayers(buildLayers())}
 
@@ -185,7 +199,7 @@ async function startFree(){
   catch(e){style={version:8,sources:{},layers:[{id:'bg',type:'background',paint:{'background-color':'#f3ead8'}}]};$('engine').textContent='底圖：離線色塊'}
   const map=new maplibregl.Map({container:'map',style,cooperativeGestures:matchMedia('(pointer:coarse)').matches,center:[HOME.lng,HOME.lat],zoom:HOME.zoom,pitch:50,bearing:-12,maxPitch:70,attributionControl:{compact:true}});
   map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'top-right');
-  const ov=new deck.MapboxOverlay({interleaved:true,layers:[],getTooltip:tooltip});
+  const ov=new deck.MapboxOverlay({interleaved:true,layers:[],onHover:hover});
   map.addControl(ov);
   map.on('zoomend',()=>{const z=map.getZoom();if(Math.abs(z-zoomNow)>.2){zoomNow=z;refresh();legend()}});
   map.on('click',e=>{ if(!ov.pickObject({x:e.point.x,y:e.point.y,radius:2})){const v=findV(e.lngLat.lng,e.lngLat.lat);if(v)selectV(v,null,'')} });
@@ -200,7 +214,7 @@ function startGoogle(){return new Promise((res,rej)=>{
     if(vec){opt.mapId=CFG.googleMapId;opt.tilt=45;opt.heading=-12;opt.renderingType='VECTOR'}else{opt.styles=GSTYLE}
     const el=$('map');el.classList.add('gm');
     const map=new google.maps.Map(el,opt);
-    const ov=new deck.GoogleMapsOverlay({interleaved:vec,layers:[],getTooltip:tooltip});
+    const ov=new deck.GoogleMapsOverlay({interleaved:vec,layers:[],onHover:hover});
     ov.setMap(map);
     map.addListener('zoom_changed',()=>{const z=map.getZoom()-.3;if(Math.abs(z-zoomNow)>.2){zoomNow=z;refresh();legend()}});
     map.addListener('click',e=>{const v=findV(e.latLng.lng(),e.latLng.lat());if(v)selectV(v,null,'')});
@@ -398,7 +412,7 @@ panel();chips();legend();
 if(qs.get('q')){q.value=qs.get('q');$('clear').hidden=false}
 const enginePromise=(CFG.googleMapsApiKey?startGoogle().catch(err=>{console.warn(err);return startFree()}):startFree()).catch(err=>{console.error(err);$('engine').textContent='地圖載入失敗'});
 Promise.all([load('data/villages.json'),load('data/liquefaction.json')]).then(([vs,lq])=>{
-  V=vs.map(a=>({code:a[0],d:a[1],n:a[2],x0:[a[3],a[4],a[5]],x1:a[14]?a[14].slice(0,3):[a[3],a[4],a[5]],p1:a[14]?a[14][3]:a[8],h1:a[14]?a[14][4]:a[9],hi:a[6],mid:a[7],p0:a[8],h0:a[9],hd:a[10],fire:a[11],rings:a[12],hn:a[13]||0,b:bbox(a[12]),L:a[6]+a[7]*.5}));
+  V=vs.map(a=>({code:a[0],d:a[1],n:a[2],x0:[a[3],a[4],a[5]],x1:a[14]?a[14].slice(0,3):[a[3],a[4],a[5]],p1:a[14]?a[14][3]:a[8],h1:a[14]?a[14][4]:a[9],hi:a[6],mid:a[7],p0:a[8],h0:a[9],hd:a[10],fire:a[11],rings:a[12],hn:a[13]||0,b:bbox(a[12]),c:cen(a[12]),L:a[6]+a[7]*.5}));
   N=V.length;TP=q75(V.map(v=>v.p0));TH=q75(V.map(v=>v.h0));
   LIQ=[];for(const[c,mp]of lq)for(const poly of mp)LIQ.push({c,poly}); // MultiPolygon → 每個 polygon 一筆
   rescore();
