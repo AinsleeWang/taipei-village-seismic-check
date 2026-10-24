@@ -75,6 +75,14 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--yellow);outline
 .badge{display:inline-block;font-weight:900;padding:1px 10px;border:2px solid #141414;color:#141414}
 .b0{background:#9fe0b6}.b1{background:var(--yellow)}.b2{background:#ffa25e}.b3{background:#ff7d74}
 .help{display:grid;gap:10px}
+.or{font-weight:900;color:var(--muted)}
+.linkbtn{font:inherit;font-weight:900;font-size:.9rem;background:none;border:0;border-bottom:2px solid var(--ink);color:var(--ink);padding:0;cursor:pointer}
+#levelDlg{max-height:calc(100dvh - 32px);overflow:auto;border:var(--bd);box-shadow:var(--shadow);padding:0;max-width:min(520px,calc(100vw - 32px));width:100%;background:var(--card);color:var(--ink)}
+#levelDlg::backdrop{background:rgba(20,20,20,.55)}
+#levelDlg .x{font:inherit;font-size:1.4rem;line-height:1;background:none;border:0;color:inherit;cursor:pointer;padding:0 4px}
+#levelDlg ol{margin:0;padding-left:1.3em;display:grid;gap:6px}
+#levelDlg .app{display:flex;gap:12px;align-items:center}
+#levelDlg .app svg{flex:none;border:2px solid var(--ink);border-radius:16px}
 .done{background:#9fe0b6;color:#141414;border:var(--bd);padding:10px 12px;font-weight:900;justify-content:space-between}
 .done span{flex:1 1 220px}
 .help ol{margin:0;padding-left:1.3em;font-weight:700;font-size:.92rem}
@@ -209,7 +217,8 @@ footer p{margin:0}
         <div class="togg" id="mode"><button data-m="floor" aria-pressed="true">地板（手機平放）</button><button data-m="wall" aria-pressed="false">柱子／牆（手機直立貼著）</button></div>
         <p class="sub" id="modeHint">把手機螢幕朝上平放在地板上，最好放在房間中間、沒有地磚接縫的地方。拿掉手機殼比較準。<b>不要量浴室、陽台、廚房</b>，那些地板本來就做了排水的坡度。</p>
       </div>
-      <div class="row"><button class="btn y" id="start">開始量</button><span class="sub" id="sensorMsg">iPhone 會先問你要不要允許「動作與方向」，請按允許。</span></div>
+      <div class="row" id="measRow"><button class="btn y" id="start">開始量</button><span class="or" id="orTxt">或直接輸入</span><span class="row" style="gap:8px"><input id="manDeg" type="text" inputmode="decimal" placeholder="度數，例如 -1" aria-label="傾斜度數"><button class="btn w" id="manAdd">記下</button></span><button class="linkbtn" id="howLevel" type="button">怎麼用水平儀量？</button></div>
+      <p class="sub" id="sensorMsg" style="margin:-6px 0 0">按「開始量」用手機感測器量；或用手機的水平儀 App 量好，直接輸入度數。iPhone 會先問你要不要允許「動作與方向」，請按允許。</p>
       <div class="level" id="levelBox" hidden>
         <div class="dial" id="dial"><i style="width:60px;height:60px"></i><i style="width:120px;height:120px"></i><span class="bar" hidden></span><span class="bub" id="bub"></span></div>
         <div class="read">
@@ -226,8 +235,7 @@ footer p{margin:0}
       <ul class="meas" id="meas"></ul>
       <div class="done row" id="tiltDone" hidden><span>✓ 傾斜已經記下，這一步完成了。</span><button class="btn" data-go="2">下一步：拍裂縫 →</button><button class="btn w" id="addMore" style="padding:4px 12px;font-size:.85rem;box-shadow:none">另一個房間也想記</button></div>
       <div class="q" id="manual">
-        <p class="sub"><b>也可以自己輸入：</b>用手機內建的「水平儀」（iPhone 在「測距儀」App 裡）量好填在下面，或選一個你觀察到的狀況。</p>
-        <div class="row"><input id="manDeg" type="text" inputmode="decimal" placeholder="度數，例如 -1"><button class="btn w" id="manAdd">記下</button></div>
+        <p class="sub"><b>沒辦法量的話</b>，選一個你觀察到的狀況：</p>
         <div class="opts" data-k="obs"><button data-v="none">看起來正常</button><button data-v="marble">彈珠會自己滾向同一邊</button><button data-v="door">門會自己開或關</button><button data-v="visible">肉眼就看得出歪</button></div>
       </div>
       <p class="note">判斷參考震後建築物緊急評估常用的傾斜門檻：超過 1/200（約 0.29 度）要留意，超過 1/40（約 1.43 度）屬於危險。地板本身做得不平、手機殼不平也會有零點幾度的誤差，所以建議用「轉 180° 再量」取平均，並在不同房間多量幾點。</p>
@@ -296,6 +304,28 @@ footer p{margin:0}
     <p class="sub" style="margin:0 16px 10px">填的內容只存在這支手機（在 Claude 裡打開時存在你的帳號），7 天後自動清掉。用共用的手機或電腦時，填完請按「清除我的資料」。</p>
     <div class="nav" style="padding-top:0"><button class="btn w" data-go="2">← 回去修改</button><button class="btn w" id="restart">清除我的資料</button></div>
   </section>
+
+  <dialog id="levelDlg" aria-labelledby="levelDlgT">
+    <div class="cap"><span id="levelDlgT">用手機的水平儀量度數</span><button class="x" id="levelDlgX" aria-label="關閉">×</button></div>
+    <div class="in">
+      <div class="app">
+        <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true"><rect x="2" y="2" width="60" height="60" rx="14" fill="#141414"/><rect x="10" y="26" width="44" height="12" rx="6" fill="none" stroke="#ffd23f" stroke-width="3"/><circle cx="32" cy="32" r="4" fill="#ffd23f"/><path d="M22 26v-6M42 26v-6M22 38v6M42 38v6" stroke="#fff" stroke-width="2"/></svg>
+        <div><b>iPhone：「測距儀」App 裡的「水平儀」</b><br><span class="sub">iPhone 內建，不用另外下載。找不到的話，在主畫面往下滑搜尋「測距儀」。</span></div>
+      </div>
+      <ol>
+        <li>打開「測距儀」App，點畫面下方的「<b>水平儀</b>」。</li>
+        <li><b>量地板</b>：把手機螢幕朝上，平放在房間中間的地板上（不要量浴室、陽台、廚房）。<br><b>量柱子或牆</b>：把手機直立，長邊貼緊柱子或門框。</li>
+        <li>等數字不動，畫面中間顯示的就是度數（例如「1°」）。往哪邊斜的負號不用管。</li>
+        <li>回到這一頁，把數字填進「度數」，按「記下」。</li>
+      </ol>
+      <p class="warn" style="margin:0">iPhone 的水平儀只顯示整數度。顯示「0°」表示小於 1 度，可以填 0；顯示「1°」就已經超過 1/200，要留意。想量得更細，請用這一頁的「開始量」（要用手機瀏覽器直接打開）。</p>
+      <div class="app">
+        <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true"><rect x="2" y="2" width="60" height="60" rx="14" fill="#3f5ad8"/><rect x="10" y="26" width="44" height="12" rx="6" fill="#fff" stroke="#141414" stroke-width="2"/><circle cx="36" cy="32" r="4.5" fill="#2f9e5b"/><path d="M28 26v12M36 26v12" stroke="#141414" stroke-width="1.5"/></svg>
+        <div><b>Android：直接用這一頁的「開始量」最簡單</b><br><span class="sub">大部分 Android 手機沒有內建水平儀。用 Chrome 打開這一頁按「開始量」，通常不用另外允許就能量，還能量到小數點。<br>想用 App 的話，到 Play 商店搜尋「水平儀」，挑評價高、會顯示到小數點的免費 App。用法和上面一樣：平放或貼牆，讀出度數填回來。</span></div>
+      </div>
+      <div><button class="btn" id="levelDlgOk">知道了，回去填</button></div>
+    </div>
+  </dialog>
 
   <article id="report" aria-hidden="true"></article>
 
@@ -477,17 +507,22 @@ function tiltDone(){
   if (done){
     $('#sensorHelp').hidden = true;
     if (!$('#manual').hidden){ $('#manual').hidden = true; manualTucked = true; }
-    $('#start').hidden = true; $('#sensorMsg').textContent = '';
+    $('#measRow').hidden = true; $('#sensorMsg').hidden = true;
   } else {
-    $('#start').hidden = !isMobile;
+    $('#measRow').hidden = false; $('#sensorMsg').hidden = false;
     if (manualTucked){ $('#manual').hidden = false; manualTucked = false; }
   }
 }
 // 一開始就能自己輸入；電腦沒有感測器，直接收起「開始量」
-if (!isMobile){ $('#start').hidden = true; $('#sensorMsg').textContent = '電腦沒有傾斜感測器。可以用手機的水平儀 App 量好，把度數填在下面。'; }
+if (!isMobile){ $('#start').hidden = true; $('#orTxt').textContent = '輸入度數'; $('#sensorMsg').textContent = '電腦沒有傾斜感測器。可以用手機的水平儀 App 量好，把度數填在這裡。'; }
+$('#howLevel').onclick = () => { const d = $('#levelDlg'); if (d.showModal) d.showModal(); else d.setAttribute('open', ''); };
+const closeLevel = () => { const d = $('#levelDlg'); if (d.close) d.close(); else d.removeAttribute('open'); $('#manDeg').focus(); };
+$('#levelDlgX').onclick = closeLevel; $('#levelDlgOk').onclick = closeLevel;
+$('#levelDlg').addEventListener('click', e => { if (e.target.id === 'levelDlg') closeLevel(); });
 $('#addMore').onclick = () => {
-  $('#start').hidden = !isMobile;
-  if (manualTucked || !listening){ $('#manual').hidden = false; manualTucked = false; $('#manDeg').focus(); }
+  $('#measRow').hidden = false; $('#sensorMsg').hidden = false;
+  if (manualTucked){ $('#manual').hidden = false; manualTucked = false; }
+  $('#manDeg').focus();
 };
 
 /* ---------- 03 裂縫辨識（瀏覽器內） ---------- */
