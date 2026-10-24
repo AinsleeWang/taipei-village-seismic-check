@@ -129,9 +129,13 @@ footer p{margin:0}
 #report{display:none}
 @media print{
   @page{size:A4;margin:14mm}
-  body{background:#fff;color:#000;padding:0}
+  html,body{width:auto!important;min-width:0!important}
+  body{background:#fff;color:#000;padding:0!important;margin:0}
+  .wrap{display:block;max-width:none;width:auto;margin:0}
   .wrap>*:not(#report){display:none!important}
-  #report{display:block!important;font-size:11pt;line-height:1.5;color:#000}
+  #report{display:block!important;width:100%;max-width:100%;box-sizing:border-box;font-size:11pt;line-height:1.5;color:#000}
+  #report table{table-layout:fixed}
+  #report td,#report th{overflow-wrap:anywhere}
   #report h1{font-size:18pt;margin:0}
   #report h2{font-size:12pt;margin:14px 0 6px;border-bottom:2px solid #000;padding-bottom:2px}
   #report table{border-collapse:collapse;width:100%}
@@ -346,6 +350,8 @@ const st = { year:null, struct:null, soft:null, liq:null, roof:null, balc:null, 
 /* ---------- 步驟切換 ---------- */
 let cur = 0;
 function go(n){
+  // 輸入框裡打了度數但忘了按「記下」，換步驟時幫忙記下
+  if ($('#manDeg') && $('#manDeg').value.trim()) $('#manAdd').click();
   cur = n;
   $$('.step').forEach((el,i) => el.hidden = i !== n);
   $$('#steps button').forEach((b,i) => { b.toggleAttribute('aria-current', i === n); if (i === n) b.setAttribute('aria-current','step'); });
@@ -760,8 +766,8 @@ function renderResult(){
   if (st.soft === 'yes') weak.push('一樓牆少（軟腳）');
   if (st.liq === 'high') weak.push('土壤液化高潛勢');
   if (st.struct === 'brick') weak.push('磚造或加強磚造');
-  if (st.roof === 'yes') weak.push('有頂樓加蓋');
-  if (st.balc === 'yes') weak.push('有陽台外推');
+  if (st.roof === 'yes') weak.push('頂樓加蓋');
+  if (st.balc === 'yes') weak.push('陽台外推');
   if (st.wall === 'thick') weak.push('打掉過磚牆或混凝土牆');
   if (old && weak.length) add(2, `民國 ${st.year} 年${st.year > 88 ? '（可能仍是 921 地震前的舊規範設計）' : '，早於 921 地震後的耐震規範'}，又有${weak.join('、')}。`);
   else if (old) add(1, `民國 ${st.year} 年${st.year > 88 ? '，可能仍是 921 地震前的舊規範設計' : '，早於 921 地震後的耐震規範'}${veryOld ? '，也早於民國 63 年第一版耐震規定' : ''}。`);
@@ -863,6 +869,7 @@ function buildReport(){
 }
 $('#addr').oninput = e => { st.addr = e.target.value.trim().slice(0, 120); save(); };
 $('#print').onclick = () => {
+  if ($('#manDeg').value.trim()) $('#manAdd').click();
   buildReport();
   try { window.print(); } catch {}
   if (inFrame) $('#printHint').innerHTML = '<b>沒有跳出列印畫面？</b>嵌在預覽視窗裡的頁面可能不能列印，請先用瀏覽器直接開這一頁（傾斜那一步的「在瀏覽器開啟這一頁」），填的內容會跟著帶過去。';
